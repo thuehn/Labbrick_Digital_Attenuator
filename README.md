@@ -36,4 +36,4 @@ To read the example attenuation.csv file continiously with milliseconds step tim
 sudo ./attenuator_lab_brick ms -r -f attenuation.csv -l att_log.txt > /dev/null
 ```
 
-For more enhances usage of our tool within your wireless experimentation look at the "run-experiment.sh" shell script as example.
+For more enhanced usage of our tool within your wireless experimentation look at the "run-experiment.sh" shell script as example.
