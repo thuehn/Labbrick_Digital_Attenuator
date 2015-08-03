@@ -1,8 +1,7 @@
 # Labbrick_Digital_Attenuator
-Linux USB Driver and Control Tool to use the digital attenuator from Labbrick.
+Control Tool to use the digital attenuator from Labbrick in your WiFi experiments under Linux.
 
-This is a small tool to use the LabBrick Digital Atenuator from Vaunix and it
-is tested and validated with the USB LDA-602 attenuator.
+This is a small tool to use the LabBrick Digital Atenuator from Vaunix under Linux. It is tested and validated with the USB LDA-602 attenuator under Ubuntu 14.04.
 
 ![alt tag](https://cloud.githubusercontent.com/assets/1880886/9039179/033e9f86-39fa-11e5-869c-4fd7ee60424e.jpg)
 
@@ -19,5 +18,15 @@ A typical experimental setup, where the digital anttenuator is connecto to a Lap
 1. clone this resository to your local linux machine
 2. request the Linux Library from Vaunix Lab brick via Email
 3. copy the files: "LDAhid.h LDAhid.c" from Lab Bricks SDK into the main folder
-4. build the tool via "make"
-5. use the compiled "attenuator_lab_brick" tool to instruct the digital attenuator
+5. ensure that you have the libusb-devel package installed in your system
+6. build the tool via "make"
+7. use the compiled "attenuator_lab_brick" tool to instruct the digital attenuator
+
+## How to use our tool ?
+
+1. start our tool with  "sudo attenuator_lab_brick -h" to get a list of supported commands
+2. either you set the attenuation level directly or for more complex attenuation patters via a csv file
+3. we support rigth now full dB values only, where the minimum is 0dB and the maximum is 63dB
+
+## Example usage with a csv file
+
