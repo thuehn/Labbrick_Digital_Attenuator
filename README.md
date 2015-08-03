@@ -17,10 +17,10 @@ A typical experimental setup, where the digital anttenuator is connecto to a Lap
 
 1. clone this resository to your local linux machine
 2. request the Linux Library from Vaunix Lab brick via Email
-3. copy the files: "LDAhid.h LDAhid.c" from Lab Bricks SDK into the main folder
+3. copy the files: "LDAhid.h LDAhid.c" from Lab Bricks SDK into the src folder
 5. ensure that you have the libusb-dev package installed in your system
 6. build the tool via "make"
-7. use the compiled "attenuator_lab_brick" tool to instruct the digital attenuator
+7. use the compiled "attenuator_lab_brick" tool to instruct the digital attenuator in your experiments
 
 ## How to use our tool ?
 
