@@ -13,3 +13,11 @@ their source and include it into the folder in order to build the tool with the 
 A typical experimental setup, where the digital anttenuator is connecto to a Laptop via USB looks like:
 
 ![alt tag](https://cloud.githubusercontent.com/assets/1880886/9039288/a4e8f3c2-39fa-11e5-8fd9-68f4c43a9418.jpg)
+
+## How to compile ?
+
+1. clone this resository to your local linux machine
+2. request the Linux Library from Vaunix Lab brick via Email
+3. copy the files: "LDAhid.h LDAhid.c" from Lab Bricks SDK into the main folder
+4. build the tool via "make"
+5. use the compiled "attenuator_lab_brick" tool to instruct the digital attenuator
