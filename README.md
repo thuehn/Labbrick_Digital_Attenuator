@@ -1,7 +1,7 @@
 # Labbrick_Digital_Attenuator
 Control Tool to use the digital attenuator from Labbrick in your WiFi experiments under Linux.
 
-This is a small tool to use the LabBrick Digital Atenuator from Vaunix under Linux. It is tested and validated with the USB LDA-602 attenuator under Ubuntu 14.04.
+This is a small tool to use the LabBrick Digital Atenuator from Vaunix under Linux. It is tested and validated with the USB LDA-602 attenuator (http://vaunix.com/products/digital-attenuators/overview/) under Ubuntu 14.04.
 
 ![alt tag](https://cloud.githubusercontent.com/assets/1880886/9039179/033e9f86-39fa-11e5-869c-4fd7ee60424e.jpg)
 
