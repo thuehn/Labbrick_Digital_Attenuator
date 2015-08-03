@@ -26,8 +26,8 @@ char*
 get_entry(char* line, int entry)
 {
 	char* token;
-	for (token = strtok(line, ";"); token && *token;
-	     token = strtok(NULL, ";\n")) {
+	for (token = strtok(line, ","); token && *token;
+	     token = strtok(NULL, ",\n")) {
 		if (!--entry)
 			return token;
 	}
