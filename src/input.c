@@ -35,16 +35,13 @@ get_entry(char* line, int entry)
 }
 
 /*
- * follows the path to a given .csv file
- * and checks it for correct entries.
+ * open .csv file and checks it for correct entries.
  * time is expected to be in the first entry followed by the
  * attenuation.
  */
 int
 read_file(char *path, int id)
 {
-	//TODO: check if more then two entries in file
-
 	int i = 0;
 	int isDigit = 0;
 	FILE *fp;
@@ -111,7 +108,6 @@ int
 get_parameters(int argc, char *argv[])
 {
 	int i;
-	//TODO: let user set ramp, triangle and/or sine after each other
 
 	//TODO: check for invalid input
 

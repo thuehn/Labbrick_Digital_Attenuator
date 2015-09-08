@@ -19,8 +19,6 @@
 
 struct user_data ud;
 
-//TODO: write man page
-
 //TODO: currently only useable with one device at some points
 //even if it is possible to use several devices they will be handled
 //one after the other
@@ -52,7 +50,7 @@ susleep(unsigned long usec)
 			return res;
 		timeleft -= MAX_USLEEP_TIME;
 	}
-	return usleep(timeleft); // remaining time
+	return usleep(timeleft);
 }
 
 int
@@ -62,6 +60,9 @@ print_dev_info(int id)
 		(double)(fnLDA_GetAttenuation(id) / 4));
 }
 
+/*
+ * check device status and return error state if something is wrong
+ */
 char *
 get_device_data(unsigned int *working_devices, int nr_active_devices)
 {
@@ -357,12 +358,13 @@ set_attenuation(unsigned int id)
 	return 1;
 }
 
+/*
+ * Set attenuation stepwise from start attenuation to end attenuation and
+ * log log it.
+ */
 int
 set_triangle(unsigned int id)
 {
-	//TODO: check if triangle is working correctly
-
-	//TODO: add non cont case
 	int i, cur_att;
 
 	if (ud.start_att < fnLDA_GetMinAttenuation(id)) {
@@ -530,8 +532,6 @@ set_triangle(unsigned int id)
 	}
 }
 
-//TODO: implement set_sine function
-
 //TODO: add function to show max/min att, stepsize and other device infos
 int
 main(int argc, char *argv[])
@@ -683,5 +683,5 @@ main(int argc, char *argv[])
 		printf("shut down of device %d was successfull\n", id + 1);
 	}
 	return 1;
-	//TODO: find out, why libusb leaves devices open
 }
+
