@@ -116,8 +116,11 @@ get_parameters(int argc, char *argv[])
 			ud.simple = 1;
 			if ((i + 1) < argc)
 				ud.attenuation = (int)(atof(argv[i + 1]) * 4);
-			else
-				printf("you set the -a switch, but missed to enter an attenuation\n");
+			else {
+				printf("you set the -a switch, but missed to
+					enter an attenuation\n");
+				return 0;
+			}
 		}
 
 		else if (strncmp(argv[i], "-i", strlen(argv[i])) == 0)
@@ -172,28 +175,35 @@ get_parameters(int argc, char *argv[])
 			}
 			else {
 				printf("no file specified\n");
+				return 0;
 			}
 		}
 
+		/* set time unit us/ms/s */
 		else if (strncmp(argv[i],"s", strlen(argv[i])) == 0) {
 				ud.ms = 0;
 				ud.us = 0;
+				printf("time in seconds\n");
 		}
 
 		else if (strncmp(argv[i],"ms", strlen(argv[i])) == 0) {
 			ud.ms = 1;
+			printf("time in milliseconds\n");
 		}
 
 		else if (strncmp(argv[i],"us", strlen(argv[i])) == 0) {
 			ud.us = 1;
+			printf("time in useconds\n");
 		}
 		else if (strncmp(argv[i], "-l", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc) {
 				ud.logfile = argv[i + 1];
 				ud.log = 1;
 				printf("logging to file: %s", ud.logfile);
-			} else
+			} else {
 				printf("please specify a logfile filename\n");
+				return 0;
+			}
 		}
 
 		else if(strncmp(argv[i], "-p", strlen(argv[i])) == 0) {

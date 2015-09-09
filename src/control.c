@@ -143,24 +143,31 @@ call_help(void)
 	printf("\t-t <time in sec>\n");
 	printf("\r\n");
 
+	printf("you can use s, ms and us to set time units\n");
+	printf("\ts -> seconds\n");
+	printf("\tms -> milliseconds\n");
+	printf("\tus -> microseconds\n");
+	printf("\r\n");
+
 	printf("-set attenuation form with\n");
 	printf("\t-p <ramp|sine|triangle>\n");
 	printf("\r\n");
 
-	printf("-set starting attenuation stregth in dB with\n");
+	printf("-set starting attenuation strength in dB with\n");
 	printf("\t-start <dB>\n");
 	printf("\r\n");
 
-	printf("-set end attenuation stregth in dB with\n");
+	printf("-set end attenuation strength in dB with\n");
 	printf("\t-end <dB>\n");
 	printf("\r\n");
 
 	printf("-set time per step with\n");
-	printf("\t-step_time\n");
+	printf("\t-step_time <step_time>\n");
 	printf("\r\n");
 
-	printf("-to use a .csv file use\n");
+	printf("-to use a .csv file\n");
 	printf("\t-f path/to/file\n");
+	printf("csv file is expected to have time;attenuation format\n");
 	printf("\r\n");
 
 	printf("-log attenuation changes to a .csv file\n");
@@ -173,12 +180,6 @@ call_help(void)
 
 	printf("repeat form, or file input for several times\n");
 	printf("\t-rr <#runs>\n");
-	printf("\r\n");
-
-	printf("you can use s, ms and us to set time units\n");
-	printf("\ts -> seconds\n");
-	printf("\tms -> milliseconds\n");
-	printf("\tus -> mikroseconds\n");
 	printf("\r\n");
 
 	return;
@@ -203,7 +204,8 @@ set_ramp(int id)
 	}
 	if (ud.start_att > fnLDA_GetMaxAttenuation(id)) {
 		printf("%.2f is above maximal attenuation of %.2f\n",
-			(double)ud.start_att / 4, (double)fnLDA_GetMaxAttenuation(id) / 4);
+			(double)ud.start_att / 4, 
+			(double)fnLDA_GetMaxAttenuation(id) / 4);
 		printf("start attenuation has been set to %.2f\n",
 			(double)fnLDA_GetMaxAttenuation(id) / 4);
 		ud.start_att = fnLDA_GetMaxAttenuation(id);
@@ -311,7 +313,7 @@ int
 set_attenuation(unsigned int id)
 {
 	if (ud.attenuation < fnLDA_GetMinAttenuation(id)) {
-		printf("%.2f is below minumal attenuation of %.2f\n",
+		printf("%.2f is below minimal attenuation of %.2f\n",
 			(double)ud.attenuation / 4,
 			(double)fnLDA_GetMinAttenuation(id) / 4);
 		printf("attenuation has been set to %.2fdB\n",
@@ -384,7 +386,7 @@ set_triangle(unsigned int id)
 		ud.start_att = fnLDA_GetMaxAttenuation(id);
 	}
 	if (ud.end_att < fnLDA_GetMinAttenuation(id)) {
-		printf("%.2f is below minumal attenuation of %.2f\n",
+		printf("%.2f is below minimal attenuation of %.2f\n",
 			((double)ud.end_att) / 4,
 			((double)fnLDA_GetMinAttenuation(id)) / 4);
 		printf("final attenuation has been set to %.2fdB\n",
@@ -418,7 +420,8 @@ set_triangle(unsigned int id)
 					cur_att + ud.ramp_steps);
 				log_attenuation( cur_att + ud.ramp_steps );
 			}
-			for (i = ud.end_att; i > (ud.end_att - ud.start_att); i--) {
+			for (i = ud.end_att; i >
+			     (ud.end_att - ud.start_att); i--) {
 				if (ud.us == 1)
 					susleep(TIME_MICROS(ud.atime));
 				else if(ud.ms == 1)
@@ -551,28 +554,29 @@ main(int argc, char *argv[])
 	uid_t uid = geteuid();
 	clear_userdata();
 	if (uid != 0) {
-		printf("brick needs to be run as root to access USB ports\n");
-		printf("please execute again as root\n");
-		return -1;
+		printf("This tool needs to be run as root to access USB ports\n");
+		printf("Please run again as root\n");
+		exit(1);
 	}
 	if (argc < 2) {
-		printf("usage: brick [-option] \n");
-		printf("for a list of options type brick -h\n");
-		return -1;
+		printf("Usage: %s [options]\n", argv[0]);
+		call_help();
+		exit(1);
 	}
 	if ((strncmp(argv[1], "-h", strlen(argv[1]))) == 0) {
 		call_help();
-		return 1;
+		exit(0);
 	}
 	if (!get_parameters(argc, argv)){
+		printf("Usage: %s [options]\n", argv[0]);
 		call_help();
-		return -1;
+		exit(1);
 	}
 	fnLDA_Init();
 	version = fnLDA_LibVersion();
 	fnLDA_SetTestMode(FALSE);
 
-	//TODO: check in intervalls if connected devices have been
+	//TODO: check in intervals if connected devices have been
 	//exchanged or disconnected
 	device_count = fnLDA_GetNumDevices();
 
@@ -581,9 +585,9 @@ main(int argc, char *argv[])
 	if (device_count == 0)
 		printf("There is no attenuator connected\n");
 	else if (device_count > 1)
-		printf("There are %d atenuators connected\n", device_count);
+		printf("There are %d attenuators connected\n", device_count);
 	else
-		printf("There is %d atenuator connected\n", device_count);
+		printf("There is %d attenuator connected\n", device_count);
 
 	get_serial_and_name(device_count, serial, device_name);
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
@@ -601,7 +605,7 @@ main(int argc, char *argv[])
 	for (id = 0; id < nr_active_devices; id++) {
 		status = fnLDA_InitDevice(working_devices[id]);
 		if (status != 0) {
-			printf("initialisation of device %d unsucsessfull\n",
+			printf("initialising device %d failed\n",
 				id + 1);
 			continue;
 		}
@@ -622,9 +626,9 @@ main(int argc, char *argv[])
 	 */
 	for (id = 1; id <= nr_active_devices; id++) {
 		/* TODO implement sine_function which will set ramp form
-		  * in intervall maybe with steps and set one step a
+		  * in interval maybe with steps and set one step a
 		  * second so it will be decided by step size and
-		  * timehow many curve intervalls there will be */
+		  * time how many curve intervals there will be */
 		if (ud.simple == 1)
 			set_attenuation(id);
 
@@ -676,11 +680,11 @@ main(int argc, char *argv[])
 	for (id = 0; id < nr_active_devices; id++) {
 		status = fnLDA_CloseDevice(working_devices[id]);
 		if (status != 0) {
-			printf("shut down of device %d unsucsessfull\n",
+			printf("shutting down device %d failed\n",
 				id + 1);
 			continue;
 		}
-		printf("shut down of device %d was successfull\n", id + 1);
+		printf("shut down of device %d was successful\n", id + 1);
 	}
 	return 1;
 }
