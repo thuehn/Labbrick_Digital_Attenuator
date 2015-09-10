@@ -66,7 +66,7 @@ print_dev_info(int id)
 char *
 get_device_data(unsigned int *working_devices, int nr_active_devices)
 {
-	char *success = "All data has been set correctly";
+	char *success = "Device successfully initialized\n";
 	int status, id;
 
 	for(id = 0; id < nr_active_devices; id++) {
