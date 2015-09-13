@@ -64,65 +64,64 @@ print_dev_info(int id)
  * check device status and return error state if something is wrong
  */
 char *
-get_device_data(unsigned int *working_devices, int nr_active_devices)
+get_device_data(unsigned int current_device)
 {
-	char *success = "Device successfully initialized\n";
-	int status, id;
+	char *success = "Successfully checked device ";
+	int status;
 
-	for(id = 0; id < nr_active_devices; id++) {
-		status = fnLDA_GetAttenuation(working_devices[id]);
-			if (status == INVALID_DEVID
-			    || status == DEVICE_NOT_READY)
-				return strncpy(errmsg ,fnLDA_perror(status),
-				     strlen(errmsg));
+	status = fnLDA_GetAttenuation(current_device);
+		if (status == INVALID_DEVID
+		    || status == DEVICE_NOT_READY)
+			return strncpy(errmsg ,fnLDA_perror(status),
+			     strlen(errmsg));
 
-		status = fnLDA_GetMinAttenuation(working_devices[id]);
-			if (status == INVALID_DEVID
-			    || status == DEVICE_NOT_READY)
-				return strncpy(errmsg ,fnLDA_perror(status),
-				     strlen(errmsg));
+	status = fnLDA_GetMinAttenuation(current_device);
+		if (status == INVALID_DEVID
+		    || status == DEVICE_NOT_READY)
+			return strncpy(errmsg ,fnLDA_perror(status),
+			     strlen(errmsg));
 
-		status = fnLDA_GetMaxAttenuation(working_devices[id]);
-			if (status == INVALID_DEVID
-			    || status == DEVICE_NOT_READY)
-				return strncpy(errmsg ,fnLDA_perror(status),
-				     strlen(errmsg));
+	status = fnLDA_GetMaxAttenuation(current_device);
+		if (status == INVALID_DEVID
+		    || status == DEVICE_NOT_READY)
+			return strncpy(errmsg ,fnLDA_perror(status),
+			     strlen(errmsg));
 
-		status = fnLDA_GetIdleTime(working_devices[id]);
-			if (status == INVALID_DEVID
-			    || status == DEVICE_NOT_READY)
-				return strncpy(errmsg ,fnLDA_perror(status),
-				     strlen(errmsg));
+	status = fnLDA_GetIdleTime(current_device);
+		if (status == INVALID_DEVID
+		    || status == DEVICE_NOT_READY)
+			return strncpy(errmsg ,fnLDA_perror(status),
+			     strlen(errmsg));
 
-		status = fnLDA_GetDwellTime(working_devices[id]);
-			if (status == INVALID_DEVID
-			    || status == DEVICE_NOT_READY)
-				return strncpy(errmsg ,fnLDA_perror(status),
-				     strlen(errmsg));
+	status = fnLDA_GetDwellTime(current_device);
+		if (status == INVALID_DEVID
+		    || status == DEVICE_NOT_READY)
+			return strncpy(errmsg ,fnLDA_perror(status),
+			     strlen(errmsg));
 
-		status = fnLDA_GetAttenuationStep(working_devices[id]);
-			if (status == INVALID_DEVID
-			    || status == DEVICE_NOT_READY)
-				return strncpy(errmsg ,fnLDA_perror(status),
-				     strlen(errmsg));
+	status = fnLDA_GetAttenuationStep(current_device);
+		if (status == INVALID_DEVID
+		    || status == DEVICE_NOT_READY)
+			return strncpy(errmsg ,fnLDA_perror(status),
+			     strlen(errmsg));
 
-		status = fnLDA_GetRF_On(working_devices[id]);
-			if (status == INVALID_DEVID
-			    || status == DEVICE_NOT_READY)
-				return strncpy(errmsg ,fnLDA_perror(status),
-				     strlen(errmsg));
+	status = fnLDA_GetRF_On(current_device);
+		if (status == INVALID_DEVID
+		    || status == DEVICE_NOT_READY)
+			return strncpy(errmsg ,fnLDA_perror(status),
+			     strlen(errmsg));
 
-		status = fnLDA_GetRampStart(working_devices[id]);
-			if (status == INVALID_DEVID
-			    || status == DEVICE_NOT_READY)
-				return strncpy(errmsg ,fnLDA_perror(status),
-				     strlen(errmsg));
+	status = fnLDA_GetRampStart(current_device);
+		if (status == INVALID_DEVID
+		    || status == DEVICE_NOT_READY)
+			return strncpy(errmsg ,fnLDA_perror(status),
+			     strlen(errmsg));
 
-		status = fnLDA_GetRampEnd(working_devices[id]);
-			if (status == INVALID_DEVID
-			    || status == DEVICE_NOT_READY)
-				return strncpy(errmsg ,fnLDA_perror(status),
-				     strlen(errmsg));
+	status = fnLDA_GetRampEnd(current_device);
+		if (status == INVALID_DEVID
+		    || status == DEVICE_NOT_READY)
+			return strncpy(errmsg ,fnLDA_perror(status),
+			     strlen(errmsg));
 	}
 	return success;
 
@@ -544,7 +543,8 @@ main(int argc, char *argv[])
 	int serial, parameter_status;
 	DEVID working_devices[MAXDEVICES];
 	char device_name[MAX_MODELNAME];
-	char *messages, *tmp, *version;
+	char *tmp, *version;
+	char message[64];
 	int res;
 
 	//TODO: make input overflow safe
@@ -617,8 +617,18 @@ main(int argc, char *argv[])
 			print_dev_info(id);
 	}
 
-	messages = get_device_data(working_devices, nr_active_devices);
-	printf("%s\n", messages);
+	for(id = 0; id < nr_active_devices; id++) {
+		strncp(message, get_device_data(working_devices[id]),
+				 strlen(message));
+		if (strncmp(message,"Successfully checked device ",
+			strlen(message)) == 0) {
+			printf(message);
+			printf("%d\n", id);
+		} else {
+			printf("check failed for device %d\n", id);
+			printf("%s\n", message);
+		}
+	}
 	print_userdata();
 
 	/*
