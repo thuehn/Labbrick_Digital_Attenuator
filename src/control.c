@@ -149,7 +149,7 @@ call_help(void)
 	printf("\r\n");
 
 	printf("-set attenuation form with\n");
-	printf("\t-p <ramp|sine|triangle>\n");
+	printf("\t-p <ramp|triangle>\n");
 	printf("\r\n");
 
 	printf("-set starting attenuation strength in dB with\n");
