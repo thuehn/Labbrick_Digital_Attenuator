@@ -22,17 +22,24 @@ struct user_data ud;
 //TODO: currently only useable with one device at some points
 //even if it is possible to use several devices they will be handled
 //one after the other
-int
-get_serial_and_name(int device_count, unsigned int serial, char *device_name)
+
+/*
+ *Get the model name and serial number of connected devices
+ *@param device_count number of devices connected
+ *@param device_name storage location for device name
+ */
+void
+get_serial_and_name(int device_count, char *device_name)
 {
 	DEVID id;
+	unsigned int serial;
+
 	for (id = 1; id <= device_count; id++) {
 		printf("Device %d has Modelname: ", id);
 		fnLDA_GetModelName(id, device_name);
 		serial = fnLDA_GetSerialNumber(id);
 		printf("%s with serial number %d\n", device_name, serial);
 	}
-	return 1;
 }
 
 /**
@@ -540,7 +547,7 @@ main(int argc, char *argv[])
 {
 	int device_count = 0;
 	int id, nr_active_devices, status, i;
-	int serial, parameter_status;
+	int parameter_status;
 	DEVID working_devices[MAXDEVICES];
 	char device_name[MAX_MODELNAME];
 	char *tmp, *version;
@@ -589,7 +596,7 @@ main(int argc, char *argv[])
 	else
 		printf("There is %d attenuator connected\n", device_count);
 
-	get_serial_and_name(device_count, serial, device_name);
+	get_serial_and_name(device_count, device_name);
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
 	printf("%d active devices found\n", nr_active_devices);
 
