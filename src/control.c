@@ -24,9 +24,9 @@ struct user_data ud;
 //one after the other
 
 /*
- *Get the model name and serial number of connected devices
- *@param device_count number of devices connected
- *@param device_name storage location for device name
+ * Get the model name and serial number of connected devices
+ * @param device_count: number of devices connected
+ * @param device_name: storage location for device name
  */
 void
 get_serial_and_name(int device_count, char *device_name)
@@ -42,9 +42,11 @@ get_serial_and_name(int device_count, char *device_name)
 	}
 }
 
-/**
+/*
  * use usleep in a safe way for systems not supporting more than 1,000,000
  * microseconds for usleep
+ * @param usec: time to sleep
+ * @return: returns 0 if time is up
  */
 int
 susleep(unsigned long usec)
@@ -60,7 +62,7 @@ susleep(unsigned long usec)
 	return usleep(timeleft);
 }
 
-int
+void
 print_dev_info(int id)
 {
 	printf("Attenuation is set to: %.2f\n",
@@ -69,6 +71,8 @@ print_dev_info(int id)
 
 /*
  * check device status and return error state if something is wrong
+ * @param current_device: id of current device
+ * @return: returns success, or error message
  */
 char *
 get_device_data(unsigned int current_device)
@@ -134,6 +138,9 @@ get_device_data(unsigned int current_device)
 
 }
 
+/*
+ * help function to display possible options and correct usage
+ */
 void
 call_help(void)
 {
@@ -193,7 +200,9 @@ call_help(void)
 
 /*
  * checks if attenutaion is outside of devices limits and sets
- * attenuation stepwise up or down to get a ramp
+ * attenuation stepwise up or down to get a ramp like form
+ * @param id: device id
+ * @return: returns 0 on success
  */
 int
 set_ramp(int id)
@@ -308,12 +317,13 @@ set_ramp(int id)
 }
 
 /*
- * Sets attenuation to a level defined by user, if the
- * user set attenuation is not above Max or below Min
- * attenuation of the Brick connected is and will sleep
- * for the time given by the user or the standard sleeptime
- * After the function leaves the attenuation will be reset
- * to 0 again.
+ * Sets attenuation to a level defined by user if
+ * not above Max or below Min attenuation of the connected
+ * attenuator. The Device will keep the attenuation for the
+ * time given by the user or the standard sleeptime.
+ * After the given time the attenuation is set to 0 again.
+ * @param id: device id
+ * @return: returns 0 on success
  */
 int
 set_attenuation(unsigned int id)
@@ -368,7 +378,9 @@ set_attenuation(unsigned int id)
 
 /*
  * Set attenuation stepwise from start attenuation to end attenuation and
- * log log it.
+ * log it.
+ * @param id: device id
+ * @return: returns 0 on success
  */
 int
 set_triangle(unsigned int id)
