@@ -278,7 +278,7 @@ check_att_limits(int id, struct user_data *ud, int check)
  * @return: returns 0 on success
  */
 int
-set_ramp_new(struct user_data *ud, int id)
+set_ramp_new(int id, struct user_data *ud)
 {
 	int i, cur_att;
 
@@ -509,7 +509,7 @@ set_attenuation_new(int id, struct user_data *ud)
  * @return: returns 0 on success
  */
 int
-set_attenuation(unsigned int id)
+set_attenuation(int id)
 {
 	if (ud.attenuation < fnLDA_GetMinAttenuation(id)) {
 		printf("%.2f is below minimal attenuation of %.2f\n",
@@ -711,7 +711,7 @@ set_triangle_new(int id, struct user_data *ud)
  * @return: returns 0 on success
  */
 int
-set_triangle(unsigned int id)
+set_triangle(int id)
 {
 	int i, cur_att;
 
