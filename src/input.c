@@ -7,6 +7,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "input.h"
+#include "control.h"
 #include "LDAhid.h"
 
 #define FALSE 0
@@ -117,8 +118,7 @@ get_parameters(int argc, char *argv[])
 			if ((i + 1) < argc)
 				ud.attenuation = (int)(atof(argv[i + 1]) * 4);
 			else {
-				printf("you set the -a switch, but missed to
-					enter an attenuation\n");
+				printf("you set the -a switch, but missed to enter an attenuation\n");
 				return 0;
 			}
 		}

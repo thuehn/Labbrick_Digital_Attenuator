@@ -16,6 +16,7 @@
 #define LINE_LENGTH 256
 #define TIME 1
 #define ATT 2
+#define RAMP 1
 
 struct user_data ud;
 
@@ -81,61 +82,59 @@ get_device_data(unsigned int current_device)
 	int status;
 
 	status = fnLDA_GetAttenuation(current_device);
-		if (status == INVALID_DEVID
-		    || status == DEVICE_NOT_READY)
-			return strncpy(errmsg ,fnLDA_perror(status),
-			     strlen(errmsg));
+	if (status == INVALID_DEVID
+	    || status == DEVICE_NOT_READY)
+		return strncpy(errmsg ,fnLDA_perror(status),
+		     strlen(errmsg));
 
 	status = fnLDA_GetMinAttenuation(current_device);
-		if (status == INVALID_DEVID
-		    || status == DEVICE_NOT_READY)
-			return strncpy(errmsg ,fnLDA_perror(status),
-			     strlen(errmsg));
+	if (status == INVALID_DEVID
+	    || status == DEVICE_NOT_READY)
+		return strncpy(errmsg ,fnLDA_perror(status),
+		     strlen(errmsg));
 
 	status = fnLDA_GetMaxAttenuation(current_device);
-		if (status == INVALID_DEVID
-		    || status == DEVICE_NOT_READY)
-			return strncpy(errmsg ,fnLDA_perror(status),
-			     strlen(errmsg));
+	if (status == INVALID_DEVID
+	    || status == DEVICE_NOT_READY)
+		return strncpy(errmsg ,fnLDA_perror(status),
+		     strlen(errmsg));
 
 	status = fnLDA_GetIdleTime(current_device);
-		if (status == INVALID_DEVID
-		    || status == DEVICE_NOT_READY)
-			return strncpy(errmsg ,fnLDA_perror(status),
-			     strlen(errmsg));
+	if (status == INVALID_DEVID
+	    || status == DEVICE_NOT_READY)
+		return strncpy(errmsg ,fnLDA_perror(status),
+		     strlen(errmsg));
 
 	status = fnLDA_GetDwellTime(current_device);
-		if (status == INVALID_DEVID
-		    || status == DEVICE_NOT_READY)
-			return strncpy(errmsg ,fnLDA_perror(status),
-			     strlen(errmsg));
+	if (status == INVALID_DEVID
+	    || status == DEVICE_NOT_READY)
+		return strncpy(errmsg ,fnLDA_perror(status),
+		     strlen(errmsg));
 
 	status = fnLDA_GetAttenuationStep(current_device);
-		if (status == INVALID_DEVID
-		    || status == DEVICE_NOT_READY)
-			return strncpy(errmsg ,fnLDA_perror(status),
-			     strlen(errmsg));
+	if (status == INVALID_DEVID
+	    || status == DEVICE_NOT_READY)
+		return strncpy(errmsg ,fnLDA_perror(status),
+		     strlen(errmsg));
 
 	status = fnLDA_GetRF_On(current_device);
-		if (status == INVALID_DEVID
-		    || status == DEVICE_NOT_READY)
-			return strncpy(errmsg ,fnLDA_perror(status),
-			     strlen(errmsg));
+	if (status == INVALID_DEVID
+	    || status == DEVICE_NOT_READY)
+		return strncpy(errmsg ,fnLDA_perror(status),
+		     strlen(errmsg));
 
 	status = fnLDA_GetRampStart(current_device);
-		if (status == INVALID_DEVID
-		    || status == DEVICE_NOT_READY)
-			return strncpy(errmsg ,fnLDA_perror(status),
-			     strlen(errmsg));
+	if (status == INVALID_DEVID
+	    || status == DEVICE_NOT_READY)
+		return strncpy(errmsg ,fnLDA_perror(status),
+		     strlen(errmsg));
 
 	status = fnLDA_GetRampEnd(current_device);
-		if (status == INVALID_DEVID
-		    || status == DEVICE_NOT_READY)
-			return strncpy(errmsg ,fnLDA_perror(status),
-			     strlen(errmsg));
-	}
+	if (status == INVALID_DEVID
+	    || status == DEVICE_NOT_READY)
+		return strncpy(errmsg ,fnLDA_perror(status),
+		     strlen(errmsg));
 	return success;
-
 }
 
 /*
@@ -196,6 +195,161 @@ call_help(void)
 	printf("\r\n");
 
 	return;
+}
+
+/*
+ * check if attenuation is above, or below device limits
+ * @param id: device id
+ * @param ud: user data struct to check attenuation from
+ * @param check: 
+ */
+void
+check_att_limits(int id, struct user_data *ud, int check)
+{
+	/* check for simple case */
+	if (check == 0) {
+		if (ud->attenuation < fnLDA_GetMinAttenuation(id)) {
+			printf("%.2f is below minimal attenuation of %.2f\n",
+				(double)ud->attenuation / 4,
+				(double)fnLDA_GetMinAttenuation(id) / 4);
+			printf("attenuation has been set to %.2fdB\n",
+				(double)fnLDA_GetMinAttenuation(id) / 4);
+			fnLDA_SetAttenuation(id, fnLDA_GetMinAttenuation(id));
+			log_attenuation( fnLDA_GetMinAttenuation(id) );
+		}
+		if (ud->attenuation > fnLDA_GetMaxAttenuation(id)) {
+			printf("%.2f is above maximal attenuation of %.2f\n",
+				(double)ud->attenuation / 4,
+				(double)fnLDA_GetMaxAttenuation(id) / 4);
+			printf("attenuation has been set to %.2f\n",
+				(double)fnLDA_GetMaxAttenuation(id) / 4);
+			fnLDA_SetAttenuation(id, fnLDA_GetMaxAttenuation(id));
+			log_attenuation(fnLDA_GetMaxAttenuation(id));
+		}
+	}
+
+	/* check for start and end attenuation */
+	if (check == 1) {
+		if (ud->start_att < fnLDA_GetMinAttenuation(id)) {
+			printf("%.2f is below minimal attenuation of %.2f\n",
+				(double)ud->start_att / 4,
+				(double)fnLDA_GetMinAttenuation(id) / 4);
+			printf("start attenuation has been set to %.2fdB\n",
+				(double)fnLDA_GetMinAttenuation(id));
+			ud->start_att = fnLDA_GetMinAttenuation(id);
+		}
+		if (ud->start_att > fnLDA_GetMaxAttenuation(id)) {
+			printf("%.2f is above maximal attenuation of %.2f\n",
+				(double)ud->start_att / 4, 
+				(double)fnLDA_GetMaxAttenuation(id) / 4);
+			printf("start attenuation has been set to %.2f\n",
+				(double)fnLDA_GetMaxAttenuation(id) / 4);
+			ud->start_att = fnLDA_GetMaxAttenuation(id);
+		}
+		if (ud->end_att < fnLDA_GetMinAttenuation(id)) {
+			printf("%.2f is below minumal attenuation of %.2f\n",
+				(double)ud->end_att / 4,
+				(double)fnLDA_GetMinAttenuation(id) / 4);
+			printf("final attenuation has been set to %.2fdB\n",
+				(double)fnLDA_GetMinAttenuation(id) / 4);
+			ud->end_att = fnLDA_GetMinAttenuation(id);
+		}
+		if (ud->end_att > fnLDA_GetMaxAttenuation(id)) {
+			printf("%.2f is above maximal attenuation of %.2f\n",
+				(double)ud->end_att,
+				(double)fnLDA_GetMaxAttenuation(id));
+			printf("final attenuation has been set to %.2f\n",
+				(double)fnLDA_GetMinAttenuation(id) / 4);
+			ud->end_att = fnLDA_GetMaxAttenuation(id);
+		}
+	}
+}
+
+/*
+ * checks if attenutaion is outside of devices limits and sets
+ * attenuation stepwise up or down to get a ramp like form
+ * @param id: device id
+ * @return: returns 0 on success
+ */
+int
+set_ramp_new(struct user_data *ud, int id)
+{
+	int i, cur_att;
+
+	check_att_limits(id, ud, RAMP);
+
+	if (ud.cont && (ud.start_att < ud.end_att)) {
+		for(;;) {
+			fnLDA_SetAttenuation(id, ud.start_att);
+			log_attenuation( ud.start_att );
+			for(i = 0; i <= (ud.end_att - ud.start_att); i++) {
+				if (ud.us == 1)
+					susleep(TIME_MICROS(ud.atime));
+				else if(ud.ms == 1)
+					susleep(TIME_MILLIS(ud.atime));
+				else
+					susleep(TIME_SECONDS(ud.atime));
+				cur_att = fnLDA_GetAttenuation(id);
+				//printf("cur_att %d\n", cur_att);
+				fnLDA_SetAttenuation(id,
+					cur_att + ud.ramp_steps);
+				log_attenuation( cur_att + ud.ramp_steps );
+			}
+		}
+	}
+	else if (ud.cont && (ud.start_att > ud.end_att)) {
+		for(;;) {
+			fnLDA_SetAttenuation(id, ud.start_att);
+			log_attenuation( ud.start_att );
+			for(i = 0; i <= (ud.start_att - ud.end_att); i++) {
+				if (ud.us == 1)
+					susleep(TIME_MICROS(ud.atime));
+				else if(ud.ms == 1)
+					susleep(TIME_MILLIS(ud.atime));
+				else
+					susleep(TIME_SECONDS(ud.atime));
+				cur_att = fnLDA_GetAttenuation(id);
+				//printf("cur_att %d\n", cur_att);
+				fnLDA_SetAttenuation(id,
+					cur_att - ud.ramp_steps);
+				log_attenuation( cur_att - ud.ramp_steps );
+			}
+		}
+	}
+	else if (ud.start_att < ud.end_att) {
+		fnLDA_SetAttenuation(id, ud.start_att);
+		log_attenuation( ud.start_att );
+		for(i = 0; i <= (ud.end_att - ud.start_att); i++) {
+			if (ud.us == 1)
+				susleep(TIME_MICROS(ud.atime));
+			else if(ud.ms == 1)
+				susleep(TIME_MILLIS(ud.atime));
+			else
+				susleep(TIME_SECONDS(ud.atime));
+			cur_att = fnLDA_GetAttenuation(id);
+			//printf("cur_att %d\n", cur_att);
+			fnLDA_SetAttenuation(id,
+				cur_att + ud.ramp_steps);
+			log_attenuation( cur_att + ud.ramp_steps );
+		}
+	}
+	else if (ud.start_att > ud.end_att) {
+		fnLDA_SetAttenuation(id, ud.start_att);
+		log_attenuation( ud.start_att );
+		for(i = 0; i <= (ud.start_att - ud.end_att); i++) {
+			if (ud.us == 1)
+				susleep(TIME_MICROS(ud.atime));
+			else if(ud.ms == 1)
+				susleep(TIME_MILLIS(ud.atime));
+			else
+				susleep(TIME_SECONDS(ud.atime));
+			cur_att = fnLDA_GetAttenuation(id);
+			//printf("cur_att %d\n", cur_att);
+			fnLDA_SetAttenuation(id,
+				cur_att - ud.ramp_steps);
+			log_attenuation( cur_att - ud.ramp_steps );
+		}
+	}
 }
 
 /*
@@ -637,7 +791,7 @@ main(int argc, char *argv[])
 	}
 
 	for(id = 0; id < nr_active_devices; id++) {
-		strncp(message, get_device_data(working_devices[id]),
+		strncpy(message, get_device_data(working_devices[id]),
 				 strlen(message));
 		if (strncmp(message,"Successfully checked device ",
 			strlen(message)) == 0) {

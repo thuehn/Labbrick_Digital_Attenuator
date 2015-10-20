@@ -33,5 +33,7 @@ char * get_entry(char* line, int entry);
 int get_parameters(int argc, char *argv[]);
 void print_userdata(void);
 void clear_userdata(void);
+int log_attenuation(unsigned int att);
 
 #endif
+
