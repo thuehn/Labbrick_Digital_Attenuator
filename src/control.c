@@ -278,76 +278,76 @@ set_ramp_new(struct user_data *ud, int id)
 
 	check_att_limits(id, ud, RAMP);
 
-	if (ud.cont && (ud.start_att < ud.end_att)) {
+	if (ud->cont && (ud->start_att < ud->end_att)) {
 		for(;;) {
-			fnLDA_SetAttenuation(id, ud.start_att);
-			log_attenuation( ud.start_att );
-			for(i = 0; i <= (ud.end_att - ud.start_att); i++) {
-				if (ud.us == 1)
-					susleep(TIME_MICROS(ud.atime));
-				else if(ud.ms == 1)
-					susleep(TIME_MILLIS(ud.atime));
+			fnLDA_SetAttenuation(id, ud->start_att);
+			log_attenuation( ud->start_att );
+			for(i = 0; i <= (ud->end_att - ud->start_att); i++) {
+				if (ud->us == 1)
+					susleep(TIME_MICROS(ud->atime));
+				else if(ud->ms == 1)
+					susleep(TIME_MILLIS(ud->atime));
 				else
-					susleep(TIME_SECONDS(ud.atime));
+					susleep(TIME_SECONDS(ud->atime));
 				cur_att = fnLDA_GetAttenuation(id);
 				//printf("cur_att %d\n", cur_att);
 				fnLDA_SetAttenuation(id,
-					cur_att + ud.ramp_steps);
-				log_attenuation( cur_att + ud.ramp_steps );
+					cur_att + ud->ramp_steps);
+				log_attenuation( cur_att + ud->ramp_steps );
 			}
 		}
 	}
-	else if (ud.cont && (ud.start_att > ud.end_att)) {
+	else if (ud->cont && (ud->start_att > ud->end_att)) {
 		for(;;) {
-			fnLDA_SetAttenuation(id, ud.start_att);
-			log_attenuation( ud.start_att );
-			for(i = 0; i <= (ud.start_att - ud.end_att); i++) {
-				if (ud.us == 1)
-					susleep(TIME_MICROS(ud.atime));
-				else if(ud.ms == 1)
-					susleep(TIME_MILLIS(ud.atime));
+			fnLDA_SetAttenuation(id, ud->start_att);
+			log_attenuation( ud->start_att );
+			for(i = 0; i <= (ud->start_att - ud->end_att); i++) {
+				if (ud->us == 1)
+					susleep(TIME_MICROS(ud->atime));
+				else if(ud->ms == 1)
+					susleep(TIME_MILLIS(ud->atime));
 				else
-					susleep(TIME_SECONDS(ud.atime));
+					susleep(TIME_SECONDS(ud->atime));
 				cur_att = fnLDA_GetAttenuation(id);
 				//printf("cur_att %d\n", cur_att);
 				fnLDA_SetAttenuation(id,
-					cur_att - ud.ramp_steps);
-				log_attenuation( cur_att - ud.ramp_steps );
+					cur_att - ud->ramp_steps);
+				log_attenuation( cur_att - ud->ramp_steps );
 			}
 		}
 	}
-	else if (ud.start_att < ud.end_att) {
-		fnLDA_SetAttenuation(id, ud.start_att);
-		log_attenuation( ud.start_att );
-		for(i = 0; i <= (ud.end_att - ud.start_att); i++) {
-			if (ud.us == 1)
-				susleep(TIME_MICROS(ud.atime));
-			else if(ud.ms == 1)
-				susleep(TIME_MILLIS(ud.atime));
+	else if (ud->start_att < ud->end_att) {
+		fnLDA_SetAttenuation(id, ud->start_att);
+		log_attenuation( ud->start_att );
+		for(i = 0; i <= (ud->end_att - ud->start_att); i++) {
+			if (ud->us == 1)
+				susleep(TIME_MICROS(ud->atime));
+			else if(ud->ms == 1)
+				susleep(TIME_MILLIS(ud->atime));
 			else
-				susleep(TIME_SECONDS(ud.atime));
+				susleep(TIME_SECONDS(ud->atime));
 			cur_att = fnLDA_GetAttenuation(id);
 			//printf("cur_att %d\n", cur_att);
 			fnLDA_SetAttenuation(id,
-				cur_att + ud.ramp_steps);
-			log_attenuation( cur_att + ud.ramp_steps );
+				cur_att + ud->ramp_steps);
+			log_attenuation( cur_att + ud->ramp_steps );
 		}
 	}
-	else if (ud.start_att > ud.end_att) {
-		fnLDA_SetAttenuation(id, ud.start_att);
-		log_attenuation( ud.start_att );
-		for(i = 0; i <= (ud.start_att - ud.end_att); i++) {
-			if (ud.us == 1)
-				susleep(TIME_MICROS(ud.atime));
-			else if(ud.ms == 1)
-				susleep(TIME_MILLIS(ud.atime));
+	else if (ud->start_att > ud->end_att) {
+		fnLDA_SetAttenuation(id, ud->start_att);
+		log_attenuation( ud->start_att );
+		for(i = 0; i <= (ud->start_att - ud->end_att); i++) {
+			if (ud->us == 1)
+				susleep(TIME_MICROS(ud->atime));
+			else if(ud->ms == 1)
+				susleep(TIME_MILLIS(ud->atime));
 			else
-				susleep(TIME_SECONDS(ud.atime));
+				susleep(TIME_SECONDS(ud->atime));
 			cur_att = fnLDA_GetAttenuation(id);
 			//printf("cur_att %d\n", cur_att);
 			fnLDA_SetAttenuation(id,
-				cur_att - ud.ramp_steps);
-			log_attenuation( cur_att - ud.ramp_steps );
+				cur_att - ud->ramp_steps);
+			log_attenuation( cur_att - ud->ramp_steps );
 		}
 	}
 }
@@ -719,9 +719,6 @@ main(int argc, char *argv[])
 	char *tmp, *version;
 	char message[64];
 	int res;
-
-	//TODO: make input overflow safe
-	char *input = "";
 
 	/* get the uid of caller */
 	uid_t uid = geteuid();
