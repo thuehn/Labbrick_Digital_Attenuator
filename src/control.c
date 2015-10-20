@@ -275,9 +275,8 @@ check_att_limits(int id, struct user_data *ud, int check)
  * checks if attenutaion is outside of devices limits and sets
  * attenuation stepwise up or down to get a ramp like form
  * @param id: device id
- * @return: returns 0 on success
  */
-int
+void
 set_ramp_new(int id, struct user_data *ud)
 {
 	int i, cur_att;
@@ -483,9 +482,8 @@ set_ramp(int id)
  * time given by the user or the standard sleeptime.
  * After the given time the attenuation is set to 0 again.
  * @param id: device id
- * @return: returns 0 on success
  */
-int
+void
 set_attenuation_new(int id, struct user_data *ud)
 {
 	check_att_limits(id, ud, SIMPLE);
@@ -496,7 +494,6 @@ set_attenuation_new(int id, struct user_data *ud)
 		susleep(TIME_MILLIS(ud->atime));
 	else
 		susleep(TIME_SECONDS(ud->atime));
-	return 1;
 }
 
 /*
@@ -563,9 +560,8 @@ set_attenuation(int id)
  * Set attenuation stepwise from start attenuation to end attenuation and
  * log it.
  * @param id: device id
- * @return: returns 0 on success
  */
-int
+void
 set_triangle_new(int id, struct user_data *ud)
 {
 	int i, cur_att;
