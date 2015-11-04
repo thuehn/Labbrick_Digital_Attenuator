@@ -506,7 +506,7 @@ print_userdata(void)
 }
 
 void
-clear_userdata(void)
+clear_userdata_new(struct user_data *ud)
 {
 	ud->atime = 0;
 	ud->attenuation = 0;
