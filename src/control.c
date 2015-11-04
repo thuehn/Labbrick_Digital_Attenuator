@@ -881,7 +881,7 @@ set_triangle(int id)
  * check if the user wants to use multiple attenuators
  * @param argc: argument count
  * @param *argv: arguments passed to the program
- * return returns 0 on multiple devices, else 1
+ * return returns 1 on multiple devices, else 0
  */
 int
 check_multi_device(int argc,char *argv[])
@@ -919,6 +919,9 @@ main(int argc, char *argv[])
 	if ((strncmp(argv[1], "-h", strlen(argv[1]))) == 0) {
 		call_help();
 		exit(0);
+	}
+	if (check_multi_device(argc,argv)){
+		//TODO: pthreaded functions
 	}
 	if (!get_parameters(argc, argv)){
 		printf("Usage: %s [options]\n", argv[0]);
@@ -1048,6 +1051,6 @@ main(int argc, char *argv[])
 		}
 		printf("shut down of device %d was successful\n", id + 1);
 	}
-	return 1;
+	return 0;
 }
 
