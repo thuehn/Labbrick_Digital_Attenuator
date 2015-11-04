@@ -877,6 +877,19 @@ set_triangle(int id)
 	}
 }
 
+/*
+ * check if the user wants to use multiple attenuators
+ * @param argc: argument count
+ * @param *argv: arguments passed to the program
+ * return returns 0 on multiple devices, else 1
+ */
+int
+check_multi_device(int argc,char *argv[])
+{
+
+	return 1;
+}
+
 //TODO: add function to show max/min att, stepsize and other device infos
 int
 main(int argc, char *argv[])
@@ -932,7 +945,6 @@ main(int argc, char *argv[])
 	get_serial_and_name(device_count, device_name);
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
 	printf("%d active devices found\n", nr_active_devices);
-
 
 	for (id = 0; id < nr_active_devices; id++) {
 		if ((strncmp(argv[1], "-i", strlen(argv[1]))) == 0)
