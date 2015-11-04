@@ -28,12 +28,17 @@ struct user_data
 	char *logfile;
 };
 
+int read_file_new(char *patch, int id, struct user_data *ud);
 int read_file(char *path, int id);
 char * get_entry(char* line, int entry);
+int get_parameters_new(int argc, char *argv[], struct user_data *ud);
 int get_parameters(int argc, char *argv[]);
+void print_userdata_new(struct user_data *ud);
 void print_userdata(void);
+void clear_userdata_new(struct user_data *ud);
 void clear_userdata(void);
 int log_attenuation(unsigned int att);
+int log_attenuation_new(unsigned int att, struct user_data *ud);
 
 #endif
 
