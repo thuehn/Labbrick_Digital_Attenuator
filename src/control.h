@@ -15,5 +15,5 @@ void set_attenuation_new(int id,struct user_data *ud);
 int set_triangle(int id);
 void set_triangle_new(int id, struct user_data *ud);
 void print_dev_info(int id);
-
+int check_multi_device(char *argv[]);
 #endif

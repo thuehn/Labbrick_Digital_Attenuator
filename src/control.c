@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "control.h"
 #include "input.h"
 #include "LDAhid.h"
@@ -21,6 +22,11 @@
 #define SIMPLE 0
 
 struct user_data ud;
+
+struct thread_arguments {
+	char *path;
+	int id;
+};
 
 //TODO: currently only useable with one device at some points
 //even if it is possible to use several devices they will be handled
@@ -157,10 +163,10 @@ call_help(void)
 	printf("\t-t <time in sec>\n");
 	printf("\r\n");
 
-	printf("you can use s, ms and us to set time units\n");
-	printf("\ts -> seconds\n");
-	printf("\tms -> milliseconds\n");
-	printf("\tus -> microseconds\n");
+	printf("\tyou can use s, ms and us to set time units\n");
+	printf("\t\ts -> seconds\n");
+	printf("\t\tms -> milliseconds\n");
+	printf("\t\tus -> microseconds\n");
 	printf("\r\n");
 
 	printf("-set attenuation form with\n");
@@ -188,12 +194,20 @@ call_help(void)
 	printf("\t-l path/to/logfile\n");
 	printf("\r\n");
 
-	printf("repeat form, or file input until canceled by user\n");
+	printf("-repeat form, or file input until canceled by user\n");
 	printf("\t-r\n");
 	printf("\r\n");
 
-	printf("repeat form, or file input for several times\n");
+	printf("-repeat form, or file input for several times\n");
 	printf("\t-rr <#runs>\n");
+	printf("\r\n");
+
+	printf("-to use more than one connected attenuator use\n");
+	printf("\t-md <config_file1> <config_file2> ...\n");
+	printf("\r\n");
+	printf("\t every connected and detected attenuator will be used\n");
+	printf("\t if there are more config files than attenuators detected\n");
+	printf("\t the remaining files will be discarded\n");
 	printf("\r\n");
 
 	return;
@@ -884,10 +898,256 @@ set_triangle(int id)
  * return returns 1 on multiple devices, else 0
  */
 int
-check_multi_device(int argc,char *argv[])
+check_multi_device(char *argv[])
 {
+	if (strncmp(argv[1], "-md", strlen(argv[1])) == 0)
+		return 1;
+	else
+		return 0;
+}
 
-	return 1;
+/*
+ * get instructions for attenuator from file and start it
+ * @param path: path to config file
+ */
+void *
+start_device(void *arguments)
+{
+	struct thread_arguments *args = arguments;
+	struct user_data ud;
+	clear_userdata_new(&ud);
+	read_file_new(args->path, args->id, &ud);
+	pthread_exit((void *)args->id);
+}
+
+/*
+ * start thread for each active device
+ */
+int
+handle_dev(int argc, char *argv[])
+{
+	struct thread_arguments args;
+	pthread_t threads[MAXDEVICES];
+	int device_count = 0;
+	int id, nr_active_devices, file_count, ret;
+	DEVID working_devices[MAXDEVICES];
+	char device_name[MAX_MODELNAME];
+	void *status;
+
+	device_count = fnLDA_GetNumDevices();
+
+	if (device_count == 0)
+		printf("There is no attenuator connected\n");
+	else if (device_count > 1)
+		printf("There are %d attenuators connected\n", device_count);
+	else
+		printf("There is %d attenuator connected\n", device_count);
+
+	get_serial_and_name(device_count, device_name);
+	nr_active_devices = fnLDA_GetDevInfo(working_devices);
+	printf("%d active devices found\n", nr_active_devices);
+
+	for (id = 0; id < nr_active_devices; id++) {
+		if ((strncmp(argv[1], "-i", strlen(argv[1]))) == 0)
+			print_dev_info(id);
+	}
+
+	/* check number of available files */
+	if ((argc - 2) < nr_active_devices)
+		file_count = argc - 2;
+	else
+		file_count = nr_active_devices;
+
+	for (id = 0; id < file_count; id++) {
+		args.path = argv[id + 2];
+		args.id = id;
+
+		ret = pthread_create(&threads[id], NULL, start_device,
+		    (void *)&args);
+
+		if (ret)
+			printf("Failed to create thread! Error Code: %d\n",ret);
+	}
+
+	for (id = 0; id < file_count; id++) {
+		ret = pthread_join(threads[id], &status);
+
+		if (ret)
+			printf("Failed to join thread! Error Code: %d\n", ret);
+
+		printf("thread %d joined\n", id);
+	}
+}
+
+//TODO: add function to show max/min att, stepsize and other device infos
+int
+main_new(int argc, char *argv[])
+{
+	int device_count = 0;
+	int id, nr_active_devices, status, i;
+	int parameter_status;
+	DEVID working_devices[MAXDEVICES];
+	char device_name[MAX_MODELNAME];
+	char *tmp, *version;
+	char message[64];
+	int res;
+
+	/* get the uid of caller */
+	uid_t uid = geteuid();
+	fnLDA_Init();
+	version = fnLDA_LibVersion();
+	printf("you are using libversion %s\n", version);
+	fnLDA_SetTestMode(FALSE);
+	if (uid != 0) {
+		printf("This tool needs to be run as root to access USB ports\n");
+		printf("Please run again as root\n");
+		exit(1);
+	}
+	if (argc < 2) {
+		printf("Usage: %s [options]\n", argv[0]);
+		call_help();
+		exit(1);
+	}
+	if ((strncmp(argv[1], "-h", strlen(argv[1]))) == 0) {
+		call_help();
+		exit(0);
+	}
+	if (check_multi_device(argv)){
+		//TODO: pthreaded functions
+		printf("multidevice support enabled\n");
+		handle_dev(argc, argv);
+		exit(0);
+	}
+
+	clear_userdata();
+
+	if (!get_parameters(argc, argv)){
+		printf("Usage: %s [options]\n", argv[0]);
+		call_help();
+		exit(1);
+	}
+
+	//TODO: check in intervals if connected devices have been
+	//exchanged or disconnected
+	device_count = fnLDA_GetNumDevices();
+
+	if (device_count == 0)
+		printf("There is no attenuator connected\n");
+	else if (device_count > 1)
+		printf("There are %d attenuators connected\n", device_count);
+	else
+		printf("There is %d attenuator connected\n", device_count);
+
+	get_serial_and_name(device_count, device_name);
+	nr_active_devices = fnLDA_GetDevInfo(working_devices);
+	printf("%d active devices found\n", nr_active_devices);
+
+	for (id = 0; id < nr_active_devices; id++) {
+		if ((strncmp(argv[1], "-i", strlen(argv[1]))) == 0)
+			print_dev_info(id);
+	}
+
+	printf("using first device\n");
+	print_dev_info(0);
+
+	/*
+	 * initiate devices
+	 */
+	for (id = 0; id < nr_active_devices; id++) {
+		status = fnLDA_InitDevice(working_devices[id]);
+		if (status != 0) {
+			printf("initialising device %d failed\n",
+				id + 1);
+			continue;
+		}
+		printf("initialized device %d successfully\n", id + 1);
+		if (ud.info != 1)
+			printf("You can set attenuation steps in %.2fdB steps\n",
+				(double)(fnLDA_GetDevResolution(id + 1)) / 4);
+		else
+			print_dev_info(id);
+	}
+
+	for(id = 0; id < nr_active_devices; id++) {
+		strncpy(message, get_device_data(working_devices[id]),
+				 strlen(message));
+		if (strncmp(message,"Successfully checked device ",
+			strlen(message)) == 0) {
+			printf(message);
+			printf("%d\n", id);
+		} else {
+			printf("check failed for device %d\n", id);
+			printf("%s\n", message);
+		}
+	}
+	print_userdata();
+
+	/*
+	 * Set device as specified by user
+	 */
+	for (id = 1; id <= nr_active_devices; id++) {
+		/* TODO implement sine_function which will set ramp form
+		  * in interval maybe with steps and set one step a
+		  * second so it will be decided by step size and
+		  * time how many curve intervals there will be */
+		if (ud.simple == 1)
+			set_attenuation(id);
+
+		else if (ud.sine && ud.cont) {
+			for(;;)
+				printf("not implemented yet\n");
+				//set_sine(id);
+		}
+		else if (ud.sine && (ud.runs >= 1))
+			for(i = 0; i < ud.runs; i++)
+				//set_sine(id);
+				printf("not implemented yet\n");
+
+		else if (ud.triangle && ud.cont) {
+			for(;;)
+				set_triangle(id);
+		}
+		else if (ud.triangle && ud.runs >= 1)
+			for(i = 0; i < ud.runs; i++)
+				set_triangle(id);
+
+		else if (ud.ramp && ud.cont) {
+			for(;;)
+				set_ramp(id);
+		}
+		else if (ud.ramp && ud.runs >= 1)
+			for(i = 0; i < ud.runs; i++)
+				set_ramp(id);
+
+		else if (ud.file && ud.cont) {
+			res = 0;
+			while (res == 0)
+				res = read_file(ud.path, id);
+		}
+		else if (ud.file && ud.runs >= 1)
+			res = 0;
+			while (res == 0)
+				res = read_file(ud.path, id);
+
+		if (ud.atime != 0) {
+			fnLDA_SetAttenuation(id, 0);
+			log_attenuation( 0 );
+		}
+	}
+
+	/*
+	 * close any open device
+	 */
+	for (id = 0; id < nr_active_devices; id++) {
+		status = fnLDA_CloseDevice(working_devices[id]);
+		if (status != 0) {
+			printf("shutting down device %d failed\n",
+				id + 1);
+			continue;
+		}
+		printf("shut down of device %d was successful\n", id + 1);
+	}
+	return 0;
 }
 
 //TODO: add function to show max/min att, stepsize and other device infos
@@ -905,7 +1165,6 @@ main(int argc, char *argv[])
 
 	/* get the uid of caller */
 	uid_t uid = geteuid();
-	clear_userdata();
 	if (uid != 0) {
 		printf("This tool needs to be run as root to access USB ports\n");
 		printf("Please run again as root\n");
@@ -920,9 +1179,13 @@ main(int argc, char *argv[])
 		call_help();
 		exit(0);
 	}
-	if (check_multi_device(argc,argv)){
+	if (check_multi_device(argv)){
 		//TODO: pthreaded functions
+		printf("multidevice support enabled\n");
 	}
+
+	clear_userdata();
+
 	if (!get_parameters(argc, argv)){
 		printf("Usage: %s [options]\n", argv[0]);
 		call_help();
