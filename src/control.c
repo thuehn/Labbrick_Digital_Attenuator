@@ -20,6 +20,8 @@
 #define RAMP 1
 #define TRIANGLE 1
 #define SIMPLE 0
+#define SINGLE_DEV 0
+#define SINGLE_DEV_ID 1
 
 struct user_data ud;
 
@@ -74,8 +76,11 @@ susleep(unsigned long usec)
 void
 print_dev_info(int id)
 {
-	printf("Attenuation is set to: %.2f\n",
-		(double)(fnLDA_GetAttenuation(id) / 4));
+	if ((fnLDA_GetAttenuation(id) / 4) < 0)
+		printf("Attenuation is set to 0dB\n");
+	else
+		printf("Attenuation is set to: %.2fdB\n",
+		       (double)(fnLDA_GetAttenuation(id) / 4));
 }
 
 /*
@@ -86,7 +91,7 @@ print_dev_info(int id)
 char *
 get_device_data(unsigned int current_device)
 {
-	char *success = "Successfully checked device ";
+	char *success = "Successfully checked device\n";
 	int status;
 
 	status = fnLDA_GetAttenuation(current_device);
@@ -892,6 +897,50 @@ set_triangle(int id)
 }
 
 /*
+ * Set device as specified by user
+ * @param ud: user data struct
+ */
+void
+set_data(struct user_data *ud)
+{
+	int i, res;
+
+	if (ud->simple == 1)
+		set_attenuation_new(SINGLE_DEV_ID, ud);
+
+	else if (ud->triangle && ud->cont) {
+		for(;;)
+			set_triangle_new(SINGLE_DEV_ID, ud);
+	}
+	else if (ud->triangle && ud->runs >= 1)
+		for(i = 0; i < ud->runs; i++)
+			set_triangle_new(SINGLE_DEV_ID, ud);
+
+	else if (ud->ramp && ud->cont) {
+		for(;;)
+			set_ramp_new(SINGLE_DEV_ID, ud);
+	}
+	else if (ud->ramp && ud->runs >= 1)
+		for(i = 0; i < ud->runs; i++)
+			set_ramp_new(SINGLE_DEV_ID, ud);
+
+	else if (ud->file && ud->cont) {
+		res = 0;
+		while (res == 0)
+			res = read_file_new(ud->path,SINGLE_DEV_ID, ud);
+	}
+	else if (ud->file && ud->runs >= 1)
+		res = 0;
+		while (res == 0)
+			res = read_file_new(ud->path, SINGLE_DEV_ID, ud);
+
+	if (ud->atime != 0) {
+		fnLDA_SetAttenuation(SINGLE_DEV_ID, 0);
+		log_attenuation(0);
+	}
+}
+
+/*
  * check if the user wants to use multiple attenuators
  * @param argc: argument count
  * @param *argv: arguments passed to the program
@@ -923,14 +972,15 @@ start_device(void *arguments)
 /*
  * start thread for each active device
  */
-int
-handle_dev(int argc, char *argv[])
+void
+handle_multi_dev(int argc, char *argv[])
 {
 	struct thread_arguments args;
 	pthread_t threads[MAXDEVICES];
 	int device_count = 0;
-	int id, nr_active_devices, file_count, ret;
+	int id, nr_active_devices, file_count, ret, state;
 	DEVID working_devices[MAXDEVICES];
+	char message[64];
 	char device_name[MAX_MODELNAME];
 	void *status;
 
@@ -950,6 +1000,35 @@ handle_dev(int argc, char *argv[])
 	for (id = 0; id < nr_active_devices; id++) {
 		if ((strncmp(argv[1], "-i", strlen(argv[1]))) == 0)
 			print_dev_info(id);
+	}
+
+	/*
+	 * initiate devices
+	 */
+	for (id = 0; id < nr_active_devices; id++) {
+		state = fnLDA_InitDevice(working_devices[id]);
+		if (state != 0) {
+			printf("initialising device %d failed\n",
+				id + 1);
+			continue;
+		}
+		printf("initialized device %d successfully\n", id + 1);
+	}
+
+	/*
+	 * check devices
+	 */
+	for(id = 0; id < nr_active_devices; id++) {
+		strncpy(message, get_device_data(working_devices[id]),
+				 sizeof(message));
+		if (strncmp(message,"Successfully checked device\n",
+			strlen(message)) == 0) {
+			printf(message);
+			printf("%d\n", id);
+		} else {
+			printf("check failed for device %d\n", id);
+			printf("%s\n", message);
+		}
 	}
 
 	/* check number of available files */
@@ -979,175 +1058,52 @@ handle_dev(int argc, char *argv[])
 	}
 }
 
-//TODO: add function to show max/min att, stepsize and other device infos
-int
-main_new(int argc, char *argv[])
+void
+handle_single_dev(int argc, char *argv[], DEVID *working_devices)
 {
-	int device_count = 0;
-	int id, nr_active_devices, status, i;
-	int parameter_status;
-	DEVID working_devices[MAXDEVICES];
-	char device_name[MAX_MODELNAME];
-	char *tmp, *version;
+	struct user_data ud;
+	int status;
 	char message[64];
-	int res;
 
-	/* get the uid of caller */
-	uid_t uid = geteuid();
-	fnLDA_Init();
-	version = fnLDA_LibVersion();
-	printf("you are using libversion %s\n", version);
-	fnLDA_SetTestMode(FALSE);
-	if (uid != 0) {
-		printf("This tool needs to be run as root to access USB ports\n");
-		printf("Please run again as root\n");
-		exit(1);
-	}
-	if (argc < 2) {
+	calloc(sizeof(ud), 1);
+	clear_userdata_new(&ud);
+
+
+	if (!get_parameters_new(argc, argv, &ud)){
 		printf("Usage: %s [options]\n", argv[0]);
 		call_help();
 		exit(1);
-	}
-	if ((strncmp(argv[1], "-h", strlen(argv[1]))) == 0) {
-		call_help();
-		exit(0);
-	}
-	if (check_multi_device(argv)){
-		//TODO: pthreaded functions
-		printf("multidevice support enabled\n");
-		handle_dev(argc, argv);
-		exit(0);
-	}
-
-	clear_userdata();
-
-	if (!get_parameters(argc, argv)){
-		printf("Usage: %s [options]\n", argv[0]);
-		call_help();
-		exit(1);
-	}
-
-	//TODO: check in intervals if connected devices have been
-	//exchanged or disconnected
-	device_count = fnLDA_GetNumDevices();
-
-	if (device_count == 0)
-		printf("There is no attenuator connected\n");
-	else if (device_count > 1)
-		printf("There are %d attenuators connected\n", device_count);
-	else
-		printf("There is %d attenuator connected\n", device_count);
-
-	get_serial_and_name(device_count, device_name);
-	nr_active_devices = fnLDA_GetDevInfo(working_devices);
-	printf("%d active devices found\n", nr_active_devices);
-
-	for (id = 0; id < nr_active_devices; id++) {
-		if ((strncmp(argv[1], "-i", strlen(argv[1]))) == 0)
-			print_dev_info(id);
 	}
 
 	printf("using first device\n");
-	print_dev_info(0);
+	print_dev_info(SINGLE_DEV);
 
-	/*
-	 * initiate devices
-	 */
-	for (id = 0; id < nr_active_devices; id++) {
-		status = fnLDA_InitDevice(working_devices[id]);
-		if (status != 0) {
-			printf("initialising device %d failed\n",
-				id + 1);
-			continue;
-		}
-		printf("initialized device %d successfully\n", id + 1);
-		if (ud.info != 1)
-			printf("You can set attenuation steps in %.2fdB steps\n",
-				(double)(fnLDA_GetDevResolution(id + 1)) / 4);
-		else
-			print_dev_info(id);
+	status = fnLDA_InitDevice(working_devices[SINGLE_DEV]);
+	if (status != 0) {
+		printf("initialising device 1 failed\n");
+	}
+	else
+		printf("initialized device %d successfully\n", SINGLE_DEV_ID);
+	if (ud.info != 1)
+		printf("You can set attenuation steps in %.2fdB steps\n",
+			(double)(fnLDA_GetDevResolution(SINGLE_DEV_ID)) / 4);
+	else
+		print_dev_info(SINGLE_DEV);
+
+	strncpy(message, get_device_data(working_devices[SINGLE_DEV]),
+		sizeof(message));
+	if (strncmp(message,"Successfully checked device\n",
+	    strlen(message)) == 0) {
+		printf("%s",message);
+	} else {
+		printf("check failed for the device\n");
+		printf("%s\n", message);
 	}
 
-	for(id = 0; id < nr_active_devices; id++) {
-		strncpy(message, get_device_data(working_devices[id]),
-				 strlen(message));
-		if (strncmp(message,"Successfully checked device ",
-			strlen(message)) == 0) {
-			printf(message);
-			printf("%d\n", id);
-		} else {
-			printf("check failed for device %d\n", id);
-			printf("%s\n", message);
-		}
-	}
-	print_userdata();
+	print_userdata_new(&ud);
 
-	/*
-	 * Set device as specified by user
-	 */
-	for (id = 1; id <= nr_active_devices; id++) {
-		/* TODO implement sine_function which will set ramp form
-		  * in interval maybe with steps and set one step a
-		  * second so it will be decided by step size and
-		  * time how many curve intervals there will be */
-		if (ud.simple == 1)
-			set_attenuation(id);
+	set_data(&ud);
 
-		else if (ud.sine && ud.cont) {
-			for(;;)
-				printf("not implemented yet\n");
-				//set_sine(id);
-		}
-		else if (ud.sine && (ud.runs >= 1))
-			for(i = 0; i < ud.runs; i++)
-				//set_sine(id);
-				printf("not implemented yet\n");
-
-		else if (ud.triangle && ud.cont) {
-			for(;;)
-				set_triangle(id);
-		}
-		else if (ud.triangle && ud.runs >= 1)
-			for(i = 0; i < ud.runs; i++)
-				set_triangle(id);
-
-		else if (ud.ramp && ud.cont) {
-			for(;;)
-				set_ramp(id);
-		}
-		else if (ud.ramp && ud.runs >= 1)
-			for(i = 0; i < ud.runs; i++)
-				set_ramp(id);
-
-		else if (ud.file && ud.cont) {
-			res = 0;
-			while (res == 0)
-				res = read_file(ud.path, id);
-		}
-		else if (ud.file && ud.runs >= 1)
-			res = 0;
-			while (res == 0)
-				res = read_file(ud.path, id);
-
-		if (ud.atime != 0) {
-			fnLDA_SetAttenuation(id, 0);
-			log_attenuation( 0 );
-		}
-	}
-
-	/*
-	 * close any open device
-	 */
-	for (id = 0; id < nr_active_devices; id++) {
-		status = fnLDA_CloseDevice(working_devices[id]);
-		if (status != 0) {
-			printf("shutting down device %d failed\n",
-				id + 1);
-			continue;
-		}
-		printf("shut down of device %d was successful\n", id + 1);
-	}
-	return 0;
 }
 
 //TODO: add function to show max/min att, stepsize and other device infos
@@ -1155,6 +1111,83 @@ int
 main(int argc, char *argv[])
 {
 	int device_count = 0;
+	int id, nr_active_devices, status, i, res;
+	int parameter_status;
+	DEVID working_devices[MAXDEVICES];
+	char device_name[MAX_MODELNAME];
+	char *tmp, *version;
+	char message[64];
+
+	/* get the uid of caller */
+	uid_t uid = geteuid();
+	fnLDA_Init();
+	version = fnLDA_LibVersion();
+	printf("you are using libversion %s\n", version);
+
+	fnLDA_SetTestMode(FALSE);
+
+	if (uid != 0) {
+		printf("This tool needs to be run as root to access USB ports\n");
+		printf("Please run again as root\n");
+		exit(1);
+	}
+	if (argc < 2) {
+		printf("Usage: %s [options]\n", argv[0]);
+		call_help();
+		exit(1);
+	}
+	if ((strncmp(argv[1], "-h", strlen(argv[1]))) == 0) {
+		call_help();
+		exit(0);
+	}
+	if (check_multi_device(argv)){
+		printf("multidevice support enabled\n");
+		handle_multi_dev(argc, argv);
+		exit(0);
+	}
+
+	device_count = fnLDA_GetNumDevices();
+
+	if (device_count == 0)
+		printf("There is no attenuator connected\n");
+	else if (device_count > 1)
+		printf("There are %d attenuators connected\n", device_count);
+	else
+		printf("There is %d attenuator connected\n", device_count);
+
+	get_serial_and_name(device_count, device_name);
+	nr_active_devices = fnLDA_GetDevInfo(working_devices);
+	printf("%d active devices found\n", nr_active_devices);
+
+	if ((strncmp(argv[1], "-i", strlen(argv[1]))) == 0) {
+		for (id = 0; id < nr_active_devices; id++)
+			print_dev_info(id);
+	}
+
+	handle_single_dev(argc, argv, working_devices);
+
+	/*
+	 * close any open device
+	 */
+	for (id = 1; id <= nr_active_devices; id++) {
+		status = fnLDA_CloseDevice(working_devices[id]);
+		printf("id: %d\n",id);
+		if (status != 0) {
+			printf("shutting down device %d failed\n",
+				id);
+			printf("%d\n", nr_active_devices);
+		}
+		else
+			printf("shut down of device %d was successful\n", id);
+	}
+	return 0;
+}
+
+//TODO: add function to show max/min att, stepsize and other device infos
+int
+main_old(int argc, char *argv[])
+{
+	int device_count = 0;
 	int id, nr_active_devices, status, i;
 	int parameter_status;
 	DEVID working_devices[MAXDEVICES];
@@ -1306,7 +1339,7 @@ main(int argc, char *argv[])
 	 * close any open device
 	 */
 	for (id = 0; id < nr_active_devices; id++) {
-		status = fnLDA_CloseDevice(working_devices[id]);
+		status = fnLDA_CloseDevice(working_devices[id + 1]);
 		if (status != 0) {
 			printf("shutting down device %d failed\n",
 				id + 1);
