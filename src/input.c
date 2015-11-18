@@ -265,6 +265,9 @@ print_userdata(struct user_data *ud)
 			printf("for %d runs\n", ud->runs);
 	if (ud->sine == 1)
 		printf("attenuation set to sine\n");
+
+	if (ud->file == 1)
+		printf("path to config file: %s\n", ud->path);
 }
 
 void

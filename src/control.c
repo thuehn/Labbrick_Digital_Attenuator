@@ -9,6 +9,7 @@
 #include "LDAhid.h"
 
 #define _GNU_SOURCE
+#define MAX_LENGTH 128
 #define FALSE 0
 #define TRUE !FALSE
 #define STRING_LENGTH 12
@@ -705,14 +706,16 @@ handle_multi_dev(int argc, char *argv[])
 void
 handle_single_dev(int argc, char *argv[], DEVID *working_devices)
 {
-	struct user_data ud;
+	struct user_data *ud = malloc(sizeof(struct user_data));
 	int status;
 	char message[64];
 
-	clear_userdata(&ud);
+	ud->path = malloc(MAX_LENGTH * sizeof(char));
+	ud->logfile = malloc(MAX_LENGTH * sizeof(char));
 
+	clear_userdata(ud);
 
-	if (!get_parameters(argc, argv, &ud)){
+	if (!get_parameters(argc, argv, ud)){
 		printf("Usage: %s [options]\n", argv[0]);
 		call_help();
 		exit(1);
@@ -727,7 +730,7 @@ handle_single_dev(int argc, char *argv[], DEVID *working_devices)
 	}
 	else
 		printf("initialized device %d successfully\n", SINGLE_DEV_ID);
-	if (ud.info != 1)
+	if (ud->info != 1)
 		printf("You can set attenuation steps in %.2fdB steps\n",
 			(double)(fnLDA_GetDevResolution(SINGLE_DEV_ID)) / 4);
 	else
@@ -743,10 +746,16 @@ handle_single_dev(int argc, char *argv[], DEVID *working_devices)
 		printf("%s\n", message);
 	}
 
-	print_userdata(&ud);
+	print_userdata(ud);
+	set_data(ud);
 
-	set_data(&ud);
-
+	printf("freeing\n");
+	free(ud->path);
+	printf("freeing path\n");
+	free(ud->logfile);
+	printf("freeing logfile\n");
+	free(ud);
+	printf("freed\n");
 }
 
 //TODO: add function to show max/min att, stepsize and other device infos
