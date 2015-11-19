@@ -541,6 +541,24 @@ set_triangle(int id, struct user_data *ud)
 	}
 }
 
+struct user_data *
+allocate_user_data(struct user_data *ud)
+{
+	ud = malloc(sizeof(struct user_data));
+	ud->path = malloc(MAX_LENGTH * sizeof(char));
+	ud->logfile = malloc(MAX_LENGTH * sizeof(char));
+
+	return ud;
+}
+
+void
+free_user_data(struct user_data *ud)
+{
+	free(ud->logfile);
+	free(ud->path);
+	free(ud);
+}
+
 /*
  * Set device as specified by user
  * @param ud: user data struct
@@ -550,35 +568,32 @@ set_data(struct user_data *ud)
 {
 	int i, res;
 
-	if (ud->simple == 1)
+	if (ud->simple == 1) {
 		set_attenuation(SINGLE_DEV_ID, ud);
-
-	else if (ud->triangle && ud->cont) {
+	} else if (ud->triangle && ud->cont) {
 		for(;;)
 			set_triangle(SINGLE_DEV_ID, ud);
-	}
-	else if (ud->triangle && ud->runs >= 1)
+	} else if (ud->triangle && ud->runs >= 1) {
 		for(i = 0; i < ud->runs; i++)
 			set_triangle(SINGLE_DEV_ID, ud);
-
-	else if (ud->ramp && ud->cont) {
+	} else if (ud->ramp && ud->cont) {
 		for(;;)
 			set_ramp(SINGLE_DEV_ID, ud);
-	}
-	else if (ud->ramp && ud->runs >= 1)
+	} else if (ud->ramp && ud->runs >= 1) {
 		for(i = 0; i < ud->runs; i++)
 			set_ramp(SINGLE_DEV_ID, ud);
-
-	else if (ud->file && ud->cont) {
+	} else if (ud->file && ud->cont) {
 		res = 0;
 		while (res == 0)
 			res = read_file(ud->path,SINGLE_DEV_ID, ud);
-	}
-	else if (ud->file && ud->runs >= 1)
+	} else if (ud->file && ud->runs >= 1) {
 		res = 0;
 		while (res == 0)
 			res = read_file(ud->path, SINGLE_DEV_ID, ud);
-
+	} else if (ud->file) {
+		printf("in default case\n");
+		read_file(ud->path, SINGLE_DEV_ID, ud);
+	}
 	if (ud->atime != 0) {
 		fnLDA_SetAttenuation(SINGLE_DEV_ID, 0);
 		log_attenuation(0, ud);
@@ -704,14 +719,11 @@ handle_multi_dev(int argc, char *argv[])
 }
 
 void
-handle_single_dev(int argc, char *argv[], DEVID *working_devices)
+handle_single_dev(int argc, char *argv[], struct user_data *ud, DEVID *working_devices)
 {
-	struct user_data *ud = malloc(sizeof(struct user_data));
+//	struct user_data *ud = malloc(sizeof(struct user_data));
 	int status;
 	char message[64];
-
-	ud->path = malloc(MAX_LENGTH * sizeof(char));
-	ud->logfile = malloc(MAX_LENGTH * sizeof(char));
 
 	clear_userdata(ud);
 
@@ -748,20 +760,13 @@ handle_single_dev(int argc, char *argv[], DEVID *working_devices)
 
 	print_userdata(ud);
 	set_data(ud);
-
-	printf("freeing\n");
-	free(ud->path);
-	printf("freeing path\n");
-	free(ud->logfile);
-	printf("freeing logfile\n");
-	free(ud);
-	printf("freed\n");
 }
 
 //TODO: add function to show max/min att, stepsize and other device infos
 int
 main(int argc, char *argv[])
 {
+	struct user_data *ud;
 	int device_count = 0;
 	int id, nr_active_devices, status, i, res;
 	int parameter_status;
@@ -816,7 +821,9 @@ main(int argc, char *argv[])
 			print_dev_info(id);
 	}
 
-	handle_single_dev(argc, argv, working_devices);
+	ud = allocate_user_data(ud);
+	handle_single_dev(argc, argv, ud, working_devices);
+	free(ud);
 
 	/*
 	 * close any open device
