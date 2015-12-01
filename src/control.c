@@ -630,6 +630,31 @@ start_device(void *arguments)
 }
 
 /*
+ * close any open devices
+ */
+int
+close_device(int nr_active_devices, DEVID *working_devices)
+{
+	int id, status;
+
+	printf("closing devices\n");
+	for (id = 1; id <= nr_active_devices; id++) {
+		status = fnLDA_CloseDevice(working_devices[id]);
+		printf("id: %d\n",id);
+		if (status != 0) {
+			printf("shutting down device %d failed\n",
+				id);
+			printf("%d\n", nr_active_devices);
+		}
+		else
+			printf("shut down of device %d was successful\n", id);
+	}
+
+	return status;
+
+}
+
+/*
  * start thread for each active device
  */
 void
@@ -657,7 +682,7 @@ handle_multi_dev(int argc, char *argv[])
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
 	printf("%d active devices found\n", nr_active_devices);
 
-	for (id = 0; id < nr_active_devices; id++) {
+	for (id = 0; id <= nr_active_devices; id++) {
 		if ((strncmp(argv[1], "-i", strlen(argv[1]))) == 0)
 			print_dev_info(id);
 	}
@@ -669,10 +694,10 @@ handle_multi_dev(int argc, char *argv[])
 		state = fnLDA_InitDevice(working_devices[id]);
 		if (state != 0) {
 			printf("initialising device %d failed\n",
-				id + 1);
+				id);
 			continue;
 		}
-		printf("initialized device %d successfully\n", id + 1);
+		printf("initialized device %d successfully\n", id);
 	}
 
 	/*
@@ -699,7 +724,7 @@ handle_multi_dev(int argc, char *argv[])
 
 	for (id = 0; id < file_count; id++) {
 		args.path = argv[id + 2];
-		args.id = id;
+		args.id = id + 1;
 
 		ret = pthread_create(&threads[id], NULL, start_device,
 		    (void *)&args);
@@ -716,6 +741,9 @@ handle_multi_dev(int argc, char *argv[])
 
 		printf("thread %d joined\n", id);
 	}
+	
+	close_device(nr_active_devices, working_devices);
+	printf("leaving handling function\n");
 }
 
 void
@@ -825,20 +853,6 @@ main(int argc, char *argv[])
 	handle_single_dev(argc, argv, ud, working_devices);
 	free(ud);
 
-	/*
-	 * close any open device
-	 */
-	for (id = 1; id <= nr_active_devices; id++) {
-		status = fnLDA_CloseDevice(working_devices[id]);
-		printf("id: %d\n",id);
-		if (status != 0) {
-			printf("shutting down device %d failed\n",
-				id);
-			printf("%d\n", nr_active_devices);
-		}
-		else
-			printf("shut down of device %d was successful\n", id);
-	}
 	return 0;
 }
 
