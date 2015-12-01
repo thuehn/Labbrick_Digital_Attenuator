@@ -696,7 +696,7 @@ handle_multi_dev(int argc, char *argv[])
 	 */
 	for(id = 0; id < nr_active_devices; id++) {
 		strncpy(message, get_device_data(working_devices[id]),
-				 sizeof(message));
+			sizeof(message));
 		if (strncmp(message,"Successfully checked device\n",
 			strlen(message)) == 0) {
 			printf(message);
@@ -729,12 +729,11 @@ handle_multi_dev(int argc, char *argv[])
 
 		if (ret)
 			printf("Failed to join thread! Error Code: %d\n", ret);
-
-		printf("thread %d joined\n", id);
 	}
 	
 	close_device(nr_active_devices, working_devices);
 	printf("leaving handling function\n");
+	return;
 }
 
 void
@@ -759,6 +758,7 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 	status = fnLDA_InitDevice(working_devices[SINGLE_DEV]);
 	if (status != 0) {
 		printf("initialising device 1 failed\n");
+		return;
 	}
 	else
 		printf("initialized device %d successfully\n", SINGLE_DEV_ID);
@@ -776,12 +776,15 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 	} else {
 		printf("check failed for the device\n");
 		printf("%s\n", message);
+		return;
 	}
 
-//	print_userdata(ud);
+	printf("printing user data\n");
+	print_userdata(ud);
 	printf("path: %s\n", ud->path);
 	set_data(ud);
 	printf("leaving single dev area\n");
+	return;
 }
 
 int
