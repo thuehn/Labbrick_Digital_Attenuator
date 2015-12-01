@@ -28,10 +28,6 @@ struct thread_arguments {
 	int id;
 };
 
-//TODO: currently only useable with one device at some points
-//even if it is possible to use several devices they will be handled
-//one after the other
-
 /*
  * Get the model name and serial number of connected devices
  * @param device_count: number of devices connected
@@ -312,7 +308,6 @@ set_ramp(int id, struct user_data *ud)
 				else
 					susleep(TIME_SECONDS(ud->atime));
 				cur_att = fnLDA_GetAttenuation(id);
-				//printf("cur_att %d\n", cur_att);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
@@ -331,7 +326,6 @@ set_ramp(int id, struct user_data *ud)
 				else
 					susleep(TIME_SECONDS(ud->atime));
 				cur_att = fnLDA_GetAttenuation(id);
-				//printf("cur_att %d\n", cur_att);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
@@ -349,7 +343,6 @@ set_ramp(int id, struct user_data *ud)
 			else
 				susleep(TIME_SECONDS(ud->atime));
 			cur_att = fnLDA_GetAttenuation(id);
-			//printf("cur_att %d\n", cur_att);
 			fnLDA_SetAttenuation(id,
 				cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
@@ -366,7 +359,6 @@ set_ramp(int id, struct user_data *ud)
 			else
 				susleep(TIME_SECONDS(ud->atime));
 			cur_att = fnLDA_GetAttenuation(id);
-			//printf("cur_att %d\n", cur_att);
 			fnLDA_SetAttenuation(id,
 				cur_att - ud->ramp_steps);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
@@ -620,9 +612,6 @@ void *
 start_device(void *arguments)
 {
 	struct thread_arguments *args = arguments;
-//	struct user_data *ud = malloc(sizeof(struct user_data));
-//	ud->path = malloc(MAX_LENGTH * sizeof(char));
-//	ud->logfile = malloc(MAX_LENGTH * sizeof(char));
 	struct user_data *ud = allocate_user_data();
 	printf("size of user_data %d\n",sizeof(struct user_data));
 	clear_userdata(ud);
@@ -795,7 +784,6 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 	printf("leaving single dev area\n");
 }
 
-//TODO: add function to show max/min att, stepsize and other device infos
 int
 main(int argc, char *argv[])
 {

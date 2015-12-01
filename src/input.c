@@ -93,7 +93,7 @@ log_attenuation(unsigned int att, struct user_data *ud)
         struct timespec ts;
         clock_gettime (CLOCK_REALTIME, &ts);
         fprintf (fp, "%u.%09u,", (unsigned int) ts.tv_sec, (unsigned int) ts.tv_nsec);
-        fprintf(fp, "%.2f\n", real_att); // attenuation
+        fprintf(fp, "%.2f\n", real_att);
 
         fclose( fp );
 
