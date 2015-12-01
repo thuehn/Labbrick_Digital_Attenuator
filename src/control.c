@@ -9,7 +9,6 @@
 #include "LDAhid.h"
 
 #define _GNU_SOURCE
-#define MAX_LENGTH 128
 #define FALSE 0
 #define TRUE !FALSE
 #define STRING_LENGTH 12
@@ -542,20 +541,17 @@ set_triangle(int id, struct user_data *ud)
 }
 
 struct user_data *
-allocate_user_data(struct user_data *ud)
+allocate_user_data(void)
 {
-	ud = malloc(sizeof(struct user_data));
-	ud->path = malloc(MAX_LENGTH * sizeof(char));
-	ud->logfile = malloc(MAX_LENGTH * sizeof(char));
+	struct user_data *ud;
 
+	ud = malloc(sizeof(struct user_data));
 	return ud;
 }
 
 void
 free_user_data(struct user_data *ud)
 {
-	free(ud->logfile);
-	free(ud->path);
 	free(ud);
 }
 
@@ -567,6 +563,8 @@ void
 set_data(struct user_data *ud)
 {
 	int i, res;
+
+	printf("setting user data\n");
 
 	if (ud->simple == 1) {
 		set_attenuation(SINGLE_DEV_ID, ud);
@@ -586,12 +584,11 @@ set_data(struct user_data *ud)
 		res = 0;
 		while (res == 0)
 			res = read_file(ud->path,SINGLE_DEV_ID, ud);
-	} else if (ud->file && ud->runs >= 1) {
+	} else if (ud->file && ud->runs > 1) {
 		res = 0;
 		while (res == 0)
 			res = read_file(ud->path, SINGLE_DEV_ID, ud);
-	} else if (ud->file) {
-		printf("in default case\n");
+	} else if (ud->file && (ud->cont == 0)) {
 		read_file(ud->path, SINGLE_DEV_ID, ud);
 	}
 	if (ud->atime != 0) {
@@ -623,9 +620,14 @@ void *
 start_device(void *arguments)
 {
 	struct thread_arguments *args = arguments;
-	struct user_data ud;
-	clear_userdata(&ud);
-	read_file(args->path, args->id, &ud);
+//	struct user_data *ud = malloc(sizeof(struct user_data));
+//	ud->path = malloc(MAX_LENGTH * sizeof(char));
+//	ud->logfile = malloc(MAX_LENGTH * sizeof(char));
+	struct user_data *ud = allocate_user_data();
+	printf("size of user_data %d\n",sizeof(struct user_data));
+	clear_userdata(ud);
+	read_file(args->path, args->id, ud);
+	free_user_data(ud);
 	pthread_exit((void *)args->id);
 }
 
@@ -747,13 +749,14 @@ handle_multi_dev(int argc, char *argv[])
 }
 
 void
-handle_single_dev(int argc, char *argv[], struct user_data *ud, DEVID *working_devices)
+handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_devices)
 {
-//	struct user_data *ud = malloc(sizeof(struct user_data));
 	int status;
 	char message[64];
 
 	clear_userdata(ud);
+	printf("cleared user data\n");
+	print_userdata(ud);
 
 	if (!get_parameters(argc, argv, ud)){
 		printf("Usage: %s [options]\n", argv[0]);
@@ -786,15 +789,16 @@ handle_single_dev(int argc, char *argv[], struct user_data *ud, DEVID *working_d
 		printf("%s\n", message);
 	}
 
-	print_userdata(ud);
+//	print_userdata(ud);
+	printf("path: %s\n", ud->path);
 	set_data(ud);
+	printf("leaving single dev area\n");
 }
 
 //TODO: add function to show max/min att, stepsize and other device infos
 int
 main(int argc, char *argv[])
 {
-	struct user_data *ud;
 	int device_count = 0;
 	int id, nr_active_devices, status, i, res;
 	int parameter_status;
@@ -831,6 +835,7 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
+	struct user_data *ud = allocate_user_data();
 	device_count = fnLDA_GetNumDevices();
 
 	if (device_count == 0)
@@ -849,10 +854,9 @@ main(int argc, char *argv[])
 			print_dev_info(id);
 	}
 
-	ud = allocate_user_data(ud);
-	handle_single_dev(argc, argv, ud, working_devices);
-	free(ud);
-
+	handle_single_dev(ud, argc, argv, working_devices);
+	free_user_data(ud);
+	printf("left device handling\n");
 	return 0;
 }
 

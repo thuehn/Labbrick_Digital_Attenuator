@@ -4,7 +4,7 @@
 #define TIME_MICROS(step_time) (step_time)
 #define TIME_MILLIS(step_time) (step_time * 1000)
 #define TIME_SECONDS(step_time) (step_time * 1000000)
-
+#define MAX_LENGTH 128
 struct user_data
 {
 	unsigned long atime;
@@ -24,8 +24,8 @@ struct user_data
 	unsigned int ms;
 	unsigned int us;
 	unsigned int log;
-	char *path;
-	char *logfile;
+	char path[128];
+	char logfile[128];
 };
 
 int read_file(char *patch, int id, struct user_data *ud);

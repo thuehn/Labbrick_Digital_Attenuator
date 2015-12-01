@@ -166,7 +166,8 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 
 		else if (strncmp(argv[i],"-f", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc) {
-				ud->path = argv[i + 1];
+				strncpy(ud->path, argv[i + 1], MAX_LENGTH - 1);
+				ud->path[MAX_LENGTH - 1] = '\0';
 				ud->file = 1;
 			}
 			else {
@@ -193,7 +194,8 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 		}
 		else if (strncmp(argv[i], "-l", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc) {
-				ud->logfile = argv[i + 1];
+				strncpy(ud->logfile, argv[i + 1], MAX_LENGTH - 1);
+				ud->logfile[MAX_LENGTH - 1] = '\0';
 				ud->log = 1;
 				printf("logging to file: %s", ud->logfile);
 			} else {
@@ -232,6 +234,7 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 void
 print_userdata(struct user_data *ud)
 {
+	printf("printing user data\n");
 	char* tu;
 	if (ud->us == 1)
 		strncpy(tu ,"mikroseconds\0", 20);
@@ -266,6 +269,7 @@ print_userdata(struct user_data *ud)
 	if (ud->sine == 1)
 		printf("attenuation set to sine\n");
 
+	printf("printing file path\n");
 	if (ud->file == 1)
 		printf("path to config file: %s\n", ud->path);
 }
@@ -274,6 +278,8 @@ void
 clear_userdata(struct user_data *ud)
 {
 	ud->atime = 0;
+	ud->us = 0;
+	ud->ms = 0;
 	ud->attenuation = 0;
 	ud->start_att = 0;
 	ud->end_att = 0;
@@ -287,8 +293,8 @@ clear_userdata(struct user_data *ud)
 	ud->file = 0;
 	ud->info = 0;
 	ud->runs = 1;
-	ud->path = "";
 	ud->log = 0;
-	ud->logfile = "";
+	memset(ud->path, '\0', sizeof(ud->path));
+	memset(ud->logfile, '\0', sizeof(ud->logfile));
 }
 
