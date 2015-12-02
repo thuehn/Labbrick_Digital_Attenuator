@@ -234,8 +234,10 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 void
 print_userdata(struct user_data *ud)
 {
+	printf("return address start print: %p\n", __builtin_return_address(0));
 	printf("printing user data\n");
-	char* tu;
+	char tu[20];
+
 	if (ud->us == 1)
 		strncpy(tu ,"mikroseconds\0", 20);
 	else if(ud->ms == 1)
@@ -272,6 +274,8 @@ print_userdata(struct user_data *ud)
 	printf("printing file path\n");
 	if (ud->file == 1)
 		printf("path to config file: %s\n", ud->path);
+	printf("return address end print: %p\n", __builtin_return_address(0));
+	printf("printing user data\n");
 }
 
 void
