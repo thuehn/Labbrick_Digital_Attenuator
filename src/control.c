@@ -787,6 +787,7 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 	print_userdata(ud);
 	printf("path: %s\n", ud->path);
 	set_data(ud);
+	close_device(SINGLE_DEV_ID, working_devices);
 	printf("leaving single dev area\n");
 	return;
 }
