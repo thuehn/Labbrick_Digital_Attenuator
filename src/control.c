@@ -535,15 +535,19 @@ set_triangle(int id, struct user_data *ud)
 struct user_data *
 allocate_user_data(void)
 {
-	struct user_data *ud;
+	struct user_data *ud = malloc(sizeof(struct user_data));
 
-	ud = malloc(sizeof(struct user_data));
+	if (ud == NULL) {
+		printf("could not allocate memory for user data\n");
+		exit(1);
+	}
 	return ud;
 }
 
 void
 free_user_data(struct user_data *ud)
 {
+	printf("freeing user data memory now\n");
 	free(ud);
 }
 
@@ -846,8 +850,8 @@ main(int argc, char *argv[])
 	}
 
 	handle_single_dev(ud, argc, argv, working_devices);
-	free_user_data(ud);
 	printf("left device handling\n");
+	free_user_data(ud);
 	return 0;
 }
 
