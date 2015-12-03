@@ -41,13 +41,9 @@ get_entry(char* line, int entry)
 int
 read_file(char *path, int id,struct user_data *ud)
 {
-	int i = 0;
-	int isDigit = 0;
 	FILE *fp;
-	char *tmp, *endptr;
+	char *tmp;
 	char line[LINE_LENGTH];
-	char atime[250];
-	char att[6];
 
 	fp = fopen(path, "r");
 
@@ -238,9 +234,9 @@ print_userdata(struct user_data *ud)
 	printf("printing user data\n");
 	char tu[20];
 
-	if (ud->us == 1)
+	if (ud->us)
 		strncpy(tu ,"mikroseconds\0", 20);
-	else if(ud->ms == 1)
+	else if(ud->ms)
 		strncpy(tu ,"milliseconds\0", 20);
 	else
 		strncpy(tu ,"seconds\0", 20);

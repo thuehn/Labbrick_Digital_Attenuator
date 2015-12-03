@@ -23,6 +23,7 @@
 #define SINGLE_DEV 0
 #define SINGLE_DEV_ID 1
 
+/* pthread struct */
 struct thread_arguments {
 	char *path;
 	int id;
@@ -544,13 +545,6 @@ allocate_user_data(void)
 	return ud;
 }
 
-void
-free_user_data(struct user_data *ud)
-{
-	printf("freeing user data memory now\n");
-	free(ud);
-}
-
 /*
  * Set device as specified by user
  * @param ud: user data struct
@@ -559,8 +553,6 @@ void
 set_data(struct user_data *ud)
 {
 	int i, res;
-
-	printf("setting user data\n");
 
 	if (ud->simple == 1) {
 		set_attenuation(SINGLE_DEV_ID, ud);
@@ -587,6 +579,7 @@ set_data(struct user_data *ud)
 	} else if (ud->file && (ud->cont == 0)) {
 		read_file(ud->path, SINGLE_DEV_ID, ud);
 	}
+
 	if (ud->atime != 0) {
 		fnLDA_SetAttenuation(SINGLE_DEV_ID, 0);
 		log_attenuation(0, ud);
@@ -620,22 +613,20 @@ start_device(void *arguments)
 	printf("size of user_data %ld\n",sizeof(struct user_data));
 	clear_userdata(ud);
 	read_file(args->path, args->id, ud);
-	free_user_data(ud);
+	free(ud);
 	pthread_exit((void *)args->id);
 }
 
 /*
  * close any open devices
  */
-int
+void
 close_device(int nr_active_devices, DEVID *working_devices)
 {
-	int id, status;
+	int id, status = 0;
 
-	printf("closing devices\n");
 	for (id = 1; id <= nr_active_devices; id++) {
 		status = fnLDA_CloseDevice(working_devices[id - 1]);
-		printf("id: %d\n",id);
 		if (status != 0) {
 			printf("shutting down device %d failed\n",
 				id);
@@ -644,9 +635,6 @@ close_device(int nr_active_devices, DEVID *working_devices)
 		else
 			printf("shut down of device %d was successful\n", id);
 	}
-
-	return status;
-
 }
 
 /*
@@ -701,11 +689,8 @@ handle_multi_dev(int argc, char *argv[])
 	for(id = 0; id < nr_active_devices; id++) {
 		strncpy(message, get_device_data(working_devices[id]),
 			sizeof(message));
-		if (strncmp(message,"Successfully checked device\n",
-			strlen(message)) == 0) {
-			printf(message);
-			printf("%d\n", id);
-		} else {
+		if (!strncmp(message,"Successfully checked device\n",
+		    strlen(message)) == 0) {
 			printf("check failed for device %d\n", id);
 			printf("%s\n", message);
 		}
@@ -736,7 +721,6 @@ handle_multi_dev(int argc, char *argv[])
 	}
 	
 	close_device(nr_active_devices, working_devices);
-	printf("leaving handling function\n");
 	return;
 }
 
@@ -746,11 +730,7 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 	int status;
 	char message[64];
 
-	printf("return address start: %p\n", __builtin_return_address(0));
 	clear_userdata(ud);
-	printf("cleared user data\n");
-	printf("return address middle: %p\n", __builtin_return_address(0));
-	//print_userdata(ud);
 
 	if (!get_parameters(argc, argv, ud)){
 		printf("Usage: %s [options]\n", argv[0]);
@@ -758,7 +738,6 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 		exit(1);
 	}
 
-	printf("using first device\n");
 	print_dev_info(SINGLE_DEV);
 
 	status = fnLDA_InitDevice(working_devices[SINGLE_DEV]);
@@ -768,11 +747,9 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 	}
 	else
 		printf("initialized device %d successfully\n", SINGLE_DEV_ID);
-	if (ud->info != 1)
+	if (ud->info)
 		printf("You can set attenuation steps in %.2fdB steps\n",
 			(double)(fnLDA_GetDevResolution(SINGLE_DEV_ID)) / 4);
-	else
-		print_dev_info(SINGLE_DEV);
 
 	strncpy(message, get_device_data(working_devices[SINGLE_DEV]),
 		sizeof(message));
@@ -785,15 +762,8 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 		return 0;
 	}
 
-	clear_userdata(ud);
-	printf("printing user data\n");
-	print_userdata(ud);
-	printf("path: %s\n", ud->path);
 	set_data(ud);
 	close_device(SINGLE_DEV_ID, working_devices);
-	printf("leaving single dev area\n");
-	clear_userdata(ud);
-	printf("return address end: %p\n", __builtin_return_address(0));
 	return 1;
 }
 
@@ -801,7 +771,7 @@ int
 main(int argc, char *argv[])
 {
 	int device_count = 0;
-	int id, nr_active_devices, ret;
+	int id, nr_active_devices;
 	DEVID working_devices[MAXDEVICES];
 	char device_name[MAX_MODELNAME];
 	char *version;
@@ -853,10 +823,7 @@ main(int argc, char *argv[])
 			print_dev_info(id);
 	}
 
-	ret = handle_single_dev(ud, argc, argv, working_devices);
-	printf("return value of handle function: %d\n",ret);
-	printf("left device handling\n");
-	//free_user_data(ud);
+	handle_single_dev(ud, argc, argv, working_devices);
 	free(ud);
 	return 0;
 }
