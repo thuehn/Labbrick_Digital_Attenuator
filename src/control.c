@@ -68,6 +68,10 @@ susleep(unsigned long usec)
 	return usleep(timeleft);
 }
 
+/*
+ * print out attenuation set on the attenuator
+ * @param id: attenuator id
+ */
 void
 print_dev_info(int id)
 {
@@ -217,7 +221,8 @@ call_help(void)
  * check if attenuation is above, or below device limits
  * @param id: device id
  * @param ud: user data struct to check attenuation from
- * @param check: 
+ * @param check: 0 if only check for atttenuation boundaries
+ * 		 1 if to check for start and end attenuation as well
  */
 void
 check_att_limits(int id, struct user_data *ud, int check)
@@ -289,6 +294,7 @@ check_att_limits(int id, struct user_data *ud, int check)
  * checks if attenutaion is outside of devices limits and sets
  * attenuation stepwise up or down to get a ramp like form
  * @param id: device id
+ * @param ud: user data struct
  */
 void
 set_ramp(int id, struct user_data *ud)
@@ -392,7 +398,8 @@ set_attenuation(int id, struct user_data *ud)
 /*
  * Set attenuation stepwise from start attenuation to end attenuation and
  * log it.
- * @param id: device id
+ * @param id: device ida
+ * @param ud: user data struct
  */
 void
 set_triangle(int id, struct user_data *ud)
@@ -533,6 +540,10 @@ set_triangle(int id, struct user_data *ud)
 	}
 }
 
+/*
+ * allocate memory for user data struct
+ * return: allocated user data struct address
+ */
 struct user_data *
 allocate_user_data(void)
 {
@@ -603,7 +614,7 @@ check_multi_device(char *argv[])
 
 /*
  * get instructions for attenuator from file and start it
- * @param path: path to config file
+ * @param iarguments: pthread argument struct
  */
 void *
 start_device(void *arguments)
@@ -619,6 +630,8 @@ start_device(void *arguments)
 
 /*
  * close any open devices
+ * @param nr_active_devices: number of active devices
+ * @param working_devices: array of active devices
  */
 void
 close_device(int nr_active_devices, DEVID *working_devices)
@@ -639,6 +652,8 @@ close_device(int nr_active_devices, DEVID *working_devices)
 
 /*
  * start thread for each active device
+ * @param argc: argument count
+ * @param argv: arguments given by the user
  */
 void
 handle_multi_dev(int argc, char *argv[])
@@ -724,6 +739,14 @@ handle_multi_dev(int argc, char *argv[])
 	return;
 }
 
+/*
+ * handle single connected device
+ * @param ud: user data struct
+ * @param argc: argument count
+ * @param argv: arguments given by the user
+ * @param working_devices: array of active devices
+ * return: 0 on success, 1 on error
+ */
 int
 handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_devices)
 {
@@ -767,6 +790,9 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 	return 1;
 }
 
+/*
+ * returns 0 on success, 1 on error
+ */
 int
 main(int argc, char *argv[])
 {

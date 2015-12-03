@@ -37,6 +37,10 @@ get_entry(char* line, int entry)
  * open .csv file and checks it for correct entries.
  * time is expected to be in the first entry followed by the
  * attenuation.
+ * @param path: path to config file
+ * @param id: device id
+ * @param ud: user data struct
+ * @return: 0 on success, 1 if not possible to open file
  */
 int
 read_file(char *path, int id,struct user_data *ud)
@@ -49,7 +53,7 @@ read_file(char *path, int id,struct user_data *ud)
 
 	if (fp == NULL) {
                 printf("unable to open input file for reading: %s\n", path);
-		return -1;
+		return 1;
 	}
 
 	while (fgets(line, LINE_LENGTH, fp)) {
@@ -69,6 +73,9 @@ read_file(char *path, int id,struct user_data *ud)
  * log the current change of attenuation to a file including
  * a timestamp. Always append the file by default.
  * <timestamp>,<attenuation>
+ * @param att: attenuation in db
+ * @param ud: user data struct
+ * @return: return 0 on success, 1 if no log, 2 if logfile couldn't be opened
  */
 int
 log_attenuation(unsigned int att, struct user_data *ud)
@@ -98,6 +105,10 @@ log_attenuation(unsigned int att, struct user_data *ud)
 
 /*
  * gets the command line parameters and sets userdata parameters
+ * @param argc: argument count
+ * @param argv: argument array to read from
+ * @param ud: user data struct
+ * @return: 1 on success, 0 on error
  */
 int
 get_parameters(int argc, char *argv[], struct user_data *ud)
@@ -227,6 +238,10 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 	return 1;
 }
 
+/* 
+ * print data set by user
+ * @param ud: user data struct
+ */
 void
 print_userdata(struct user_data *ud)
 {
@@ -274,6 +289,10 @@ print_userdata(struct user_data *ud)
 	printf("printing user data\n");
 }
 
+/*
+ * reset user data
+ * @param ud: user data struct
+ */
 void
 clear_userdata(struct user_data *ud)
 {
