@@ -250,11 +250,11 @@ print_userdata(struct user_data *ud)
 	char tu[20];
 
 	if (ud->us)
-		strncpy(tu ,"mikroseconds\0", 20);
+		strncpy(tu ,"mikroseconds\0", sizeof(tu));
 	else if(ud->ms)
-		strncpy(tu ,"milliseconds\0", 20);
+		strncpy(tu ,"milliseconds\0", sizeof(tu));
 	else
-		strncpy(tu ,"seconds\0", 20);
+		strncpy(tu ,"seconds\0", sizeof(tu));
 
 	if (ud->simple == 1) {
 		printf("attenuation set to %.2fdB\n", (double)ud->attenuation / 4);
