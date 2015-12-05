@@ -23,11 +23,6 @@ input.o: input.c input.h
 console: ldahid.o input.o control.o
 	$(CC) -o attenuator_lab_brick  ldahid.o input.o control.o $(CFLAGS)
 
-gui: clean console lab_brick gui.o
-
-gui.o: control.o input.o lab_brick_gui.c
-	$(CC) -o gui.o $(pkg-config --cflags --libs gtk+-3.0) -c lab_brick_gui.c
-
 clean:
 	rm -rf control.o
 	rm -rf input.o
