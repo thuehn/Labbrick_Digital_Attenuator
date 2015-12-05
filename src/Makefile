@@ -5,7 +5,7 @@
 # 	stuff needed for this Program to run
 
 CC=gcc
-CFLAGS=-lm -lpthread -lusb -lrt -g -Wall -O2
+CFLAGS=-lm -lpthread -lusb -lrt -g -O2
 
 all: clean_up clean console lab_brick clean
 
