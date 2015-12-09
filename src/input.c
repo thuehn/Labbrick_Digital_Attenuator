@@ -250,7 +250,7 @@ print_userdata(struct user_data *ud)
 	char tu[20];
 
 	if (ud->us)
-		strncpy(tu ,"mikroseconds\0", sizeof(tu));
+		strncpy(tu ,"microseconds\0", sizeof(tu));
 	else if(ud->ms)
 		strncpy(tu ,"milliseconds\0", sizeof(tu));
 	else
