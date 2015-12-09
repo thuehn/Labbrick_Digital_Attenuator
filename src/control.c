@@ -69,7 +69,7 @@ susleep(unsigned long usec)
 }
 
 /*
- * print out attenuation set on the attenuator
+ * print out device information of attenuator
  * @param id: attenuator id
  */
 void
@@ -398,7 +398,7 @@ set_attenuation(int id, struct user_data *ud)
 /*
  * Set attenuation stepwise from start attenuation to end attenuation and
  * log it.
- * @param id: device ida
+ * @param id: device id
  * @param ud: user data struct
  */
 void
@@ -614,7 +614,7 @@ check_multi_device(char *argv[])
 
 /*
  * get instructions for attenuator from file and start it
- * @param iarguments: pthread argument struct
+ * @param arguments: pthread argument struct
  */
 void *
 start_device(void *arguments)
