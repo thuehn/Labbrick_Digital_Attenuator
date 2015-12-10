@@ -4,7 +4,7 @@
 #define TIME_MICROS(step_time) (step_time)
 #define TIME_MILLIS(step_time) (step_time * 1000)
 #define TIME_SECONDS(step_time) (step_time * 1000000)
-
+#define MAX_LENGTH 128
 struct user_data
 {
 	unsigned long atime;
@@ -24,14 +24,16 @@ struct user_data
 	unsigned int ms;
 	unsigned int us;
 	unsigned int log;
-	char *path;
-	char *logfile;
+	char path[128];
+	char logfile[128];
 };
 
-int read_file(char *path, int id);
+int read_file(char *patch, int id, struct user_data *ud);
 char * get_entry(char* line, int entry);
-int get_parameters(int argc, char *argv[]);
-void print_userdata(void);
-void clear_userdata(void);
+int get_parameters(int argc, char *argv[], struct user_data *ud);
+void print_userdata(struct user_data *ud);
+void clear_userdata(struct user_data *ud);
+int log_attenuation(unsigned int att, struct user_data *ud);
 
 #endif
+
