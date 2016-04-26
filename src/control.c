@@ -307,7 +307,8 @@ set_ramp(int id, struct user_data *ud)
 		for(;;) {
 			fnLDA_SetAttenuation(id, ud->start_att);
 			log_attenuation(ud->start_att, ud);
-			for(i = 0; i <= (ud->end_att - ud->start_att); i++) {
+			for(i = 0; i <= ((ud->end_att - ud->start_att) /
+					 ud->ramp_steps); i++) {
 				if (ud->us == 1)
 					susleep(TIME_MICROS(ud->atime));
 				else if(ud->ms == 1)
@@ -325,7 +326,8 @@ set_ramp(int id, struct user_data *ud)
 		for(;;) {
 			fnLDA_SetAttenuation(id, ud->start_att);
 			log_attenuation(ud->start_att, ud);
-			for(i = 0; i <= (ud->start_att - ud->end_att); i++) {
+			for(i = 0; i <= ((ud->start_att - ud->end_att) /
+					 ud->ramp_steps); i++) {
 				if (ud->us == 1)
 					susleep(TIME_MICROS(ud->atime));
 				else if(ud->ms == 1)
@@ -342,7 +344,8 @@ set_ramp(int id, struct user_data *ud)
 	else if (ud->start_att < ud->end_att) {
 		fnLDA_SetAttenuation(id, ud->start_att);
 		log_attenuation(ud->start_att, ud);
-		for(i = 0; i <= (ud->end_att - ud->start_att); i++) {
+		for(i = 0; i <= ((ud->end_att - ud->start_att) /
+				 ud->ramp_steps); i++) {
 			if (ud->us == 1)
 				susleep(TIME_MICROS(ud->atime));
 			else if(ud->ms == 1)
@@ -358,7 +361,8 @@ set_ramp(int id, struct user_data *ud)
 	else if (ud->start_att > ud->end_att) {
 		fnLDA_SetAttenuation(id, ud->start_att);
 		log_attenuation(ud->start_att, ud);
-		for(i = 0; i <= (ud->start_att - ud->end_att); i++) {
+		for(i = 0; i <= ((ud->start_att - ud->end_att) /
+				 ud->ramp_steps); i++) {
 			if (ud->us == 1)
 				susleep(TIME_MICROS(ud->atime));
 			else if(ud->ms == 1)
@@ -411,7 +415,8 @@ set_triangle(int id, struct user_data *ud)
 	log_attenuation(ud->start_att, ud);
 	if (ud->cont && (ud->start_att < ud->end_att)) {
 		for(;;) {
-			for (i = 1; i <= (ud->end_att - ud->start_att); i++) {
+			for (i = 1; i <= ((ud->end_att - ud->start_att) /
+					  ud->ramp_steps); i++) {
 				if (ud->us == 1)
 					susleep(TIME_MICROS(ud->atime));
 				else if(ud->ms == 1)
@@ -425,8 +430,8 @@ set_triangle(int id, struct user_data *ud)
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
 			}
-			for (i = ud->end_att; i >
-			     (ud->end_att - ud->start_att); i--) {
+			for (i = ud->end_att; i > ((ud->end_att - ud->start_att) /
+						    ud->ramp_steps); i--) {
 				if (ud->us == 1)
 					susleep(TIME_MICROS(ud->atime));
 				else if(ud->ms == 1)
@@ -445,7 +450,8 @@ set_triangle(int id, struct user_data *ud)
 		}
 	}
 	if (ud->start_att < ud->end_att) {
-		for (i = 1; i <= (ud->end_att - ud->start_att); i++) {
+		for (i = 1; i <= ((ud->end_att - ud->start_att) /
+				   ud->ramp_steps); i++) {
 			if (ud->us == 1)
 				susleep(TIME_MICROS(ud->atime));
 			else if(ud->ms == 1)
@@ -458,7 +464,8 @@ set_triangle(int id, struct user_data *ud)
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
-		for (i = ud->end_att; i > (ud->end_att - ud->start_att); i--) {
+		for (i = ud->end_att; i > ((ud->end_att - ud->start_att) /
+					   ud->ramp_steps); i--) {
 			if (ud->us == 1)
 				susleep(TIME_MICROS(ud->atime));
 			else if(ud->ms == 1)
@@ -476,7 +483,8 @@ set_triangle(int id, struct user_data *ud)
 	}
 	if (ud->cont && (ud->start_att > ud->end_att)) {
 		for(;;) {
-			for (i = 0; i < (ud->start_att - ud->end_att); i++) {
+			for (i = 0; i < ((ud->start_att - ud->end_att) /
+					 ud->ramp_steps); i++) {
 				if (ud->us == 1)
 					susleep(TIME_MICROS(ud->atime));
 				else if(ud->ms == 1)
@@ -490,7 +498,8 @@ set_triangle(int id, struct user_data *ud)
 					cur_att - ud->ramp_steps);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
 			}
-			for (i = 1; i <= (ud->start_att - ud->end_att); i++) {
+			for (i = 1; i <= ((ud->start_att - ud->end_att) /
+					  ud->ramp_steps); i++) {
 				if (ud->us == 1)
 					susleep(TIME_MICROS(ud->atime));
 				else if(ud->ms == 1)
@@ -509,7 +518,8 @@ set_triangle(int id, struct user_data *ud)
 		}
 	}
 	if (ud->start_att > ud->end_att) {
-		for (i = 0; i < (ud->start_att - ud->end_att); i++) {
+		for (i = 0; i < ((ud->start_att - ud->end_att) /
+				 ud->ramp_steps); i++) {
 			if (ud->us == 1)
 				susleep(TIME_MICROS(ud->atime));
 			else if(ud->ms == 1)
@@ -522,7 +532,8 @@ set_triangle(int id, struct user_data *ud)
 			fnLDA_SetAttenuation(id, cur_att - ud->ramp_steps);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
-		for (i = 1; i <= (ud->start_att - ud->end_att); i++) {
+		for (i = 1; i <= ((ud->start_att - ud->end_att) /
+				  ud->ramp_steps); i++) {
 			if (ud->us == 1)
 				susleep(TIME_MICROS(ud->atime));
 			else if(ud->ms == 1)
