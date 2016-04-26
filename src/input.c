@@ -66,6 +66,15 @@ read_file(char *path, int id,struct user_data *ud)
 	}
 
 	fclose(fp);
+
+	if (!ud->cont && (ud->runs >= 1)) {
+		ud->runs -= 1;
+		if (ud->runs == 0)
+			return 1;
+		else
+			return 0;
+	}
+
 	return 0;
 }
 

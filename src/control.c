@@ -595,7 +595,7 @@ set_data(struct user_data *ud)
 		res = 0;
 		while (res == 0)
 			res = read_file(ud->path,SINGLE_DEV_ID, ud);
-	} else if (ud->file && ud->runs > 1) {
+	} else if (ud->file && (ud->runs > 1)) {
 		res = 0;
 		while (res == 0)
 			res = read_file(ud->path, SINGLE_DEV_ID, ud);
