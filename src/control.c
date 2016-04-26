@@ -185,10 +185,6 @@ call_help(void)
 	printf("\t-end <dB>\n");
 	printf("\r\n");
 
-	printf("-set time per step with\n");
-	printf("\t-step_time <step_time>\n");
-	printf("\r\n");
-
 	printf("-to use a .csv file\n");
 	printf("\t-f path/to/file\n");
 	printf("csv file is expected to have time;attenuation format\n");

@@ -16,7 +16,6 @@ struct user_data
 	unsigned int triangle;
 	unsigned int ramp_steps;
 	unsigned int cont;
-	unsigned int step_time;
 	unsigned int simple;
 	unsigned int file;
 	unsigned int info;
