@@ -185,6 +185,10 @@ call_help(void)
 	printf("\t-end <dB>\n");
 	printf("\r\n");
 
+	printf("-set size of steps for attenuation in dB with\n");
+	printf("\t-step <dB>\n");
+	printf("\r\n");
+
 	printf("-to use a .csv file\n");
 	printf("\t-f path/to/file\n");
 	printf("csv file is expected to have time;attenuation format\n");
