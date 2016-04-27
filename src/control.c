@@ -434,7 +434,7 @@ set_triangle(int id, struct user_data *ud)
 	log_attenuation(ud->start_att, ud);
 	if (ud->cont && (ud->start_att < ud->end_att)) {
 		for(;;) {
-			for (i = 1; i <= nr_steps; i++) {
+			for (i = 0; i < nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
 				printf("attenuation set to %.2fdB\n",
@@ -443,7 +443,7 @@ set_triangle(int id, struct user_data *ud)
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
 			}
-			for (i = (ud->end_att / ud->ramp_steps); i > nr_steps; i--) {
+			for (i = 1; i <= nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
 				printf("attenuation set to %.2fdB\n",
@@ -457,7 +457,7 @@ set_triangle(int id, struct user_data *ud)
 		}
 	}
 	if (ud->start_att < ud->end_att) {
-		for (i = 1; i <= nr_steps; i++) {
+		for (i = 0; i < nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
 			printf("attenuation set to %.2fdB\n",
@@ -465,7 +465,7 @@ set_triangle(int id, struct user_data *ud)
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
-		for (i = (ud->end_att / ud->ramp_steps); i >= nr_steps; i--) {
+		for (i = 1; i < nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
 			printf("attenuation set to %.2fdB\n",
