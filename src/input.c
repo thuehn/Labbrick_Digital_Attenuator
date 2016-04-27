@@ -205,7 +205,7 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 				strncpy(ud->logfile, argv[i + 1], MAX_LENGTH - 1);
 				ud->logfile[MAX_LENGTH - 1] = '\0';
 				ud->log = 1;
-				printf("logging to file: %s", ud->logfile);
+				printf("logging to file: %s\n", ud->logfile);
 			} else {
 				printf("please specify a logfile filename\n");
 				return 0;
