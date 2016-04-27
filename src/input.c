@@ -155,14 +155,6 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 				//TODO: set steps du resolution if none is set
 			}
 
-		else if (strncmp(argv[i], "-step_time", strlen(argv[i])) == 0)
-			if ((i + 1) < argc)
-				ud->step_time = atoi(argv[i + 1]);
-			else{
-				printf("no steptime set\n");
-				printf("steptime set to: %d\n", ud->step_time);
-			}
-
 		else if (strncmp(argv[i], "-start", strlen(argv[i])) == 0)
 			if ((i + 1) < argc)
 				ud->start_att = (int)(atof(argv[i + 1]) * 4);
@@ -213,7 +205,7 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 				strncpy(ud->logfile, argv[i + 1], MAX_LENGTH - 1);
 				ud->logfile[MAX_LENGTH - 1] = '\0';
 				ud->log = 1;
-				printf("logging to file: %s", ud->logfile);
+				printf("logging to file: %s\n", ud->logfile);
 			} else {
 				printf("please specify a logfile filename\n");
 				return 0;
@@ -275,14 +267,14 @@ print_userdata(struct user_data *ud)
 		printf("ramp steps set to %.2fdB\n", (double)ud->ramp_steps / 4);
 		printf("start attenuation set to %.2fdB\n", (double)ud->start_att / 4);
 		printf("end attenuation set to %.2fdB\n", (double)ud->end_att / 4);
-		printf("time per step set to %d %s\n", ud->step_time, tu);
+		printf("time per step set to %ld %s\n", ud->atime, tu);
 	}
 	if (ud->triangle == 1) {
 		printf("attenuation form set to both sided ramp\n");
 		printf("ramp steps set to %.2fdB\n", (double)ud->ramp_steps / 4);
 		printf("start attenuation set to %.2fdB\n", (double)ud->start_att / 4);
 		printf("maximal attenuation set to %.2fdB\n", (double)ud->end_att / 4);
-		printf("time per step set to %d %s\n", ud->step_time, tu);
+		printf("time per step set to %ld %s\n", ud->atime, tu);
 	}
 	if (ud->cont == 1)
 		printf("continous behavior is set\n");
@@ -305,7 +297,7 @@ print_userdata(struct user_data *ud)
 void
 clear_userdata(struct user_data *ud)
 {
-	ud->atime = 0;
+	ud->atime = SLEEP_TIME;
 	ud->us = 0;
 	ud->ms = 0;
 	ud->attenuation = 0;
@@ -316,7 +308,6 @@ clear_userdata(struct user_data *ud)
 	ud->triangle = 0;
 	ud->ramp_steps = 1;
 	ud->cont = 0;
-	ud->step_time = SLEEP_TIME;
 	ud->simple = 0;
 	ud->file = 0;
 	ud->info = 0;

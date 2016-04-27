@@ -185,8 +185,8 @@ call_help(void)
 	printf("\t-end <dB>\n");
 	printf("\r\n");
 
-	printf("-set time per step with\n");
-	printf("\t-step_time <step_time>\n");
+	printf("-set size of steps for attenuation in dB with\n");
+	printf("\t-step <dB>\n");
 	printf("\r\n");
 
 	printf("-to use a .csv file\n");
@@ -291,90 +291,117 @@ check_att_limits(int id, struct user_data *ud, int check)
 }
 
 /*
+ * calculate number of steps for triangle and ramp function
+ * @param ud: user data struct
+ */
+int
+calc_nr_steps(struct user_data *ud)
+{
+	if (ud->start_att < ud->end_att)
+		return ((ud->end_att - ud->start_att) / ud->ramp_steps);
+	else
+		return ((ud->start_att - ud->end_att) / ud->ramp_steps);
+}
+
+/*
+ * keep attenuation for given time
+ * @param ud: user data struct
+ */
+void
+attenuation_time(struct user_data *ud)
+{
+	if (ud->us == 1)
+		susleep(TIME_MICROS(ud->atime));
+	else if(ud->ms == 1)
+		susleep(TIME_MILLIS(ud->atime));
+	else
+		susleep(TIME_SECONDS(ud->atime));
+}
+
+/*
  * checks if attenutaion is outside of devices limits and sets
  * attenuation stepwise up or down to get a ramp like form
  * @param id: device id
  * @param ud: user data struct
  */
-void
+int
 set_ramp(int id, struct user_data *ud)
 {
-	int i, cur_att;
-
+	int i, cur_att, nr_steps;
 	check_att_limits(id, ud, RAMP);
+
+	nr_steps = calc_nr_steps(ud);
+	
+	if (!nr_steps) {
+		printf("start and end attenuation are equal\n");
+		return 1;
+	}
 
 	if (ud->cont && (ud->start_att < ud->end_att)) {
 		for(;;) {
 			fnLDA_SetAttenuation(id, ud->start_att);
 			log_attenuation(ud->start_att, ud);
-			for(i = 0; i <= ((ud->end_att - ud->start_att) /
-					 ud->ramp_steps); i++) {
-				if (ud->us == 1)
-					susleep(TIME_MICROS(ud->atime));
-				else if(ud->ms == 1)
-					susleep(TIME_MILLIS(ud->atime));
-				else
-					susleep(TIME_SECONDS(ud->atime));
+			for(i = 0; i < nr_steps; i++) {
+				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
+				printf("attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
 			}
+			cur_att = fnLDA_GetAttenuation(id);
+			printf("attenuation set to %.2fdB\n", ((double)cur_att) / 4);
 		}
 	}
-	else if (ud->cont && (ud->start_att > ud->end_att)) {
+	if (ud->cont && (ud->start_att > ud->end_att)) {
 		for(;;) {
 			fnLDA_SetAttenuation(id, ud->start_att);
 			log_attenuation(ud->start_att, ud);
-			for(i = 0; i <= ((ud->start_att - ud->end_att) /
-					 ud->ramp_steps); i++) {
-				if (ud->us == 1)
-					susleep(TIME_MICROS(ud->atime));
-				else if(ud->ms == 1)
-					susleep(TIME_MILLIS(ud->atime));
-				else
-					susleep(TIME_SECONDS(ud->atime));
+			for(i = 0; i < nr_steps; i++) {
+				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
+				printf("attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
 			}
+			cur_att = fnLDA_GetAttenuation(id);
+			printf("attenuation set to %.2fdB\n", ((double)cur_att) / 4);
 		}
 	}
-	else if (ud->start_att < ud->end_att) {
+	if (ud->start_att < ud->end_att) {
 		fnLDA_SetAttenuation(id, ud->start_att);
 		log_attenuation(ud->start_att, ud);
-		for(i = 0; i <= ((ud->end_att - ud->start_att) /
-				 ud->ramp_steps); i++) {
-			if (ud->us == 1)
-				susleep(TIME_MICROS(ud->atime));
-			else if(ud->ms == 1)
-				susleep(TIME_MILLIS(ud->atime));
-			else
-				susleep(TIME_SECONDS(ud->atime));
+		for(i = 0; i < nr_steps; i++) {
+			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
 			fnLDA_SetAttenuation(id,
 				cur_att + ud->ramp_steps);
+			printf("attenuation set to %.2fdB\n",
+				((double)cur_att) / 4);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
 	}
-	else if (ud->start_att > ud->end_att) {
+	if (ud->start_att > ud->end_att) {
 		fnLDA_SetAttenuation(id, ud->start_att);
 		log_attenuation(ud->start_att, ud);
-		for(i = 0; i <= ((ud->start_att - ud->end_att) /
-				 ud->ramp_steps); i++) {
-			if (ud->us == 1)
-				susleep(TIME_MICROS(ud->atime));
-			else if(ud->ms == 1)
-				susleep(TIME_MILLIS(ud->atime));
-			else
-				susleep(TIME_SECONDS(ud->atime));
+		for(i = 0; i < nr_steps; i++) {
+			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
 			fnLDA_SetAttenuation(id,
 				cur_att - ud->ramp_steps);
+			printf("attenuation set to %.2fdB\n",
+				((double)cur_att) / 4);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
 	}
+	attenuation_time(ud);
+	cur_att = fnLDA_GetAttenuation(id);
+	printf("attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+
+	return 0;
 }
 
 /*
@@ -390,13 +417,7 @@ void
 set_attenuation(int id, struct user_data *ud)
 {
 	check_att_limits(id, ud, SIMPLE);
-
-	if (ud->us == 1)
-		susleep(TIME_MICROS(ud->atime));
-	else if(ud->ms == 1)
-		susleep(TIME_MILLIS(ud->atime));
-	else
-		susleep(TIME_SECONDS(ud->atime));
+	attenuation_time(ud);
 }
 
 /*
@@ -405,32 +426,25 @@ set_attenuation(int id, struct user_data *ud)
  * @param id: device id
  * @param ud: user data struct
  */
-void
+int
 set_triangle(int id, struct user_data *ud)
 {
 	int i, cur_att, nr_steps;
 	check_att_limits(id, ud, TRIANGLE);
 
-	if (ud->start_att < ud->end_att) {
-		nr_steps = (ud->end_att - ud->start_att) / ud->ramp_steps;
-	} else if (ud->start_att > ud->end_att) {
-		nr_steps= (ud->start_att - ud->end_att) / ud->ramp_steps;
-	} else {
-		printf("start attenuation equals end attenuation");
-		return;
+	nr_steps = calc_nr_steps(ud);
+
+	if (!nr_steps) {
+		printf("start and end attenuation are equal\n");
+		return 1;
 	}
 
 	fnLDA_SetAttenuation(id, ud->start_att);
 	log_attenuation(ud->start_att, ud);
 	if (ud->cont && (ud->start_att < ud->end_att)) {
 		for(;;) {
-			for (i = 1; i <= nr_steps; i++) {
-				if (ud->us == 1)
-					susleep(TIME_MICROS(ud->atime));
-				else if(ud->ms == 1)
-					susleep(TIME_MILLIS(ud->atime));
-				else
-					susleep(TIME_SECONDS(ud->atime));
+			for (i = 0; i < nr_steps; i++) {
+				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
 				printf("attenuation set to %.2fdB\n",
 					((double)cur_att) / 4);
@@ -438,13 +452,8 @@ set_triangle(int id, struct user_data *ud)
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
 			}
-			for (i = (ud->end_att / ud->ramp_steps); i > nr_steps; i--) {
-				if (ud->us == 1)
-					susleep(TIME_MICROS(ud->atime));
-				else if(ud->ms == 1)
-					susleep(TIME_MILLIS(ud->atime));
-				else
-					susleep(TIME_SECONDS(ud->atime));
+			for (i = 1; i <= nr_steps; i++) {
+				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
 				printf("attenuation set to %.2fdB\n",
 					((double)cur_att) / 4);
@@ -457,26 +466,16 @@ set_triangle(int id, struct user_data *ud)
 		}
 	}
 	if (ud->start_att < ud->end_att) {
-		for (i = 1; i <= nr_steps; i++) {
-			if (ud->us == 1)
-				susleep(TIME_MICROS(ud->atime));
-			else if(ud->ms == 1)
-				susleep(TIME_MILLIS(ud->atime));
-			else
-				susleep(TIME_SECONDS(ud->atime));
+		for (i = 0; i < nr_steps; i++) {
+			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
 			printf("attenuation set to %.2fdB\n",
 				((double)cur_att) / 4);
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
-		for (i = (ud->end_att / ud->ramp_steps); i >= nr_steps; i--) {
-			if (ud->us == 1)
-				susleep(TIME_MICROS(ud->atime));
-			else if(ud->ms == 1)
-				susleep(TIME_MILLIS(ud->atime));
-			else
-				susleep(TIME_SECONDS(ud->atime));
+		for (i = 1; i < nr_steps; i++) {
+			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
 			printf("attenuation set to %.2fdB\n",
 				((double)cur_att) / 4);
@@ -489,12 +488,7 @@ set_triangle(int id, struct user_data *ud)
 	if (ud->cont && (ud->start_att > ud->end_att)) {
 		for(;;) {
 			for (i = 0; i < nr_steps; i++) {
-				if (ud->us == 1)
-					susleep(TIME_MICROS(ud->atime));
-				else if(ud->ms == 1)
-					susleep(TIME_MILLIS(ud->atime));
-				else
-					susleep(TIME_SECONDS(ud->atime));
+				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
 				printf("attenuation set to %.2fdB\n",
 					((double)cur_att) / 4);
@@ -503,12 +497,7 @@ set_triangle(int id, struct user_data *ud)
 				log_attenuation(cur_att - ud->ramp_steps, ud);
 			}
 			for (i = 1; i <= nr_steps; i++) {
-				if (ud->us == 1)
-					susleep(TIME_MICROS(ud->atime));
-				else if(ud->ms == 1)
-					susleep(TIME_MILLIS(ud->atime));
-				else
-					susleep(TIME_SECONDS(ud->atime));
+				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
 				printf("attenuation set to %.2fdB\n",
 					((double)cur_att) / 4);
@@ -522,12 +511,7 @@ set_triangle(int id, struct user_data *ud)
 	}
 	if (ud->start_att > ud->end_att) {
 		for (i = 0; i < nr_steps; i++) {
-			if (ud->us == 1)
-				susleep(TIME_MICROS(ud->atime));
-			else if(ud->ms == 1)
-				susleep(TIME_MILLIS(ud->atime));
-			else
-				susleep(TIME_SECONDS(ud->atime));
+			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
 			printf("attenuation set to %.2fdB\n",
 				((double)cur_att) / 4);
@@ -535,12 +519,7 @@ set_triangle(int id, struct user_data *ud)
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
 		for (i = 1; i <= nr_steps; i++) {
-			if (ud->us == 1)
-				susleep(TIME_MICROS(ud->atime));
-			else if(ud->ms == 1)
-				susleep(TIME_MILLIS(ud->atime));
-			else
-				susleep(TIME_SECONDS(ud->atime));
+			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
 			printf("attenuation set to %.2fdB\n",
 				((double)cur_att) / 4);
@@ -550,6 +529,10 @@ set_triangle(int id, struct user_data *ud)
 		fnLDA_SetAttenuation(id, ud->start_att);
 		log_attenuation(ud->start_att, ud);
 	}
+	attenuation_time(ud);
+	cur_att = fnLDA_GetAttenuation(id);
+	printf("attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+	return 0;
 }
 
 /*
@@ -575,28 +558,38 @@ allocate_user_data(void)
 void
 set_data(struct user_data *ud)
 {
-	int i, res;
+	int i, res = 0;
 
 	if (ud->simple == 1) {
 		set_attenuation(SINGLE_DEV_ID, ud);
 	} else if (ud->triangle && ud->cont) {
-		for(;;)
-			set_triangle(SINGLE_DEV_ID, ud);
+		for(;;) {
+			res = set_triangle(SINGLE_DEV_ID, ud);
+			if (res)
+				return;
+		}
 	} else if (ud->triangle && ud->runs >= 1) {
-		for(i = 0; i < ud->runs; i++)
-			set_triangle(SINGLE_DEV_ID, ud);
+		for(i = 0; i < ud->runs; i++) {
+			res = set_triangle(SINGLE_DEV_ID, ud);
+			if (res)
+				return;
+		}
 	} else if (ud->ramp && ud->cont) {
-		for(;;)
-			set_ramp(SINGLE_DEV_ID, ud);
+		for(;;) {
+			res = set_ramp(SINGLE_DEV_ID, ud);
+			if (res)
+				return;
+		}
 	} else if (ud->ramp && ud->runs >= 1) {
-		for(i = 0; i < ud->runs; i++)
-			set_ramp(SINGLE_DEV_ID, ud);
+		for(i = 0; i < ud->runs; i++) {
+			res = set_ramp(SINGLE_DEV_ID, ud);
+			if (res)
+				return;
+		}
 	} else if (ud->file && ud->cont) {
-		res = 0;
 		while (res == 0)
 			res = read_file(ud->path,SINGLE_DEV_ID, ud);
 	} else if (ud->file && (ud->runs > 1)) {
-		res = 0;
 		while (res == 0)
 			res = read_file(ud->path, SINGLE_DEV_ID, ud);
 	} else if (ud->file && (ud->cont == 0)) {
