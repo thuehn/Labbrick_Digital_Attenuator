@@ -267,14 +267,14 @@ print_userdata(struct user_data *ud)
 		printf("ramp steps set to %.2fdB\n", (double)ud->ramp_steps / 4);
 		printf("start attenuation set to %.2fdB\n", (double)ud->start_att / 4);
 		printf("end attenuation set to %.2fdB\n", (double)ud->end_att / 4);
-		printf("time per step set to %d %s\n", ud->atime, tu);
+		printf("time per step set to %ld %s\n", ud->atime, tu);
 	}
 	if (ud->triangle == 1) {
 		printf("attenuation form set to both sided ramp\n");
 		printf("ramp steps set to %.2fdB\n", (double)ud->ramp_steps / 4);
 		printf("start attenuation set to %.2fdB\n", (double)ud->start_att / 4);
 		printf("maximal attenuation set to %.2fdB\n", (double)ud->end_att / 4);
-		printf("time per step set to %d %s\n", ud->atime, tu);
+		printf("time per step set to %ld %s\n", ud->atime, tu);
 	}
 	if (ud->cont == 1)
 		printf("continous behavior is set\n");
