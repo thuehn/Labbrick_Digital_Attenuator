@@ -426,7 +426,7 @@ set_attenuation(int id, struct user_data *ud)
  * @param id: device id
  * @param ud: user data struct
  */
-void
+int
 set_triangle(int id, struct user_data *ud)
 {
 	int i, cur_att, nr_steps;
@@ -437,8 +437,8 @@ set_triangle(int id, struct user_data *ud)
 	} else if (ud->start_att > ud->end_att) {
 		nr_steps= (ud->start_att - ud->end_att) / ud->ramp_steps;
 	} else {
-		printf("start attenuation equals end attenuation");
-		return;
+		printf("start and end attenuation are equal\n");
+		return 1;
 	}
 
 	fnLDA_SetAttenuation(id, ud->start_att);
@@ -573,6 +573,7 @@ set_triangle(int id, struct user_data *ud)
 	}
 	cur_att = fnLDA_GetAttenuation(id);
 	printf("attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+	return 0;
 }
 
 /*
@@ -603,11 +604,17 @@ set_data(struct user_data *ud)
 	if (ud->simple == 1) {
 		set_attenuation(SINGLE_DEV_ID, ud);
 	} else if (ud->triangle && ud->cont) {
-		for(;;)
-			set_triangle(SINGLE_DEV_ID, ud);
+		for(;;) {
+			res = set_triangle(SINGLE_DEV_ID, ud);
+			if (res)
+				return;
+		}
 	} else if (ud->triangle && ud->runs >= 1) {
-		for(i = 0; i < ud->runs; i++)
-			set_triangle(SINGLE_DEV_ID, ud);
+		for(i = 0; i < ud->runs; i++) {
+			res = set_triangle(SINGLE_DEV_ID, ud);
+			if (res)
+				return;
+		}
 	} else if (ud->ramp && ud->cont) {
 		for(;;) {
 			res = set_ramp(SINGLE_DEV_ID, ud);
