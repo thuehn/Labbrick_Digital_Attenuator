@@ -291,6 +291,19 @@ check_att_limits(int id, struct user_data *ud, int check)
 }
 
 /*
+ * calculate number of steps for triangle and ramp function
+ * @param ud: user data struct
+ */
+int
+calc_nr_steps(struct user_data *ud)
+{
+	if (ud->start_att < ud->end_att)
+		return ((ud->end_att - ud->start_att) / ud->ramp_steps);
+	else
+		return ((ud->start_att - ud->end_att) / ud->ramp_steps);
+}
+
+/*
  * keep attenuation for given time
  * @param ud: user data struct
  */
@@ -317,11 +330,9 @@ set_ramp(int id, struct user_data *ud)
 	int i, cur_att, nr_steps;
 	check_att_limits(id, ud, RAMP);
 
-	if (ud->start_att < ud->end_att) {
-		nr_steps = (ud->end_att - ud->start_att) / ud->ramp_steps;
-	} else if (ud->start_att > ud->end_att) {
-		nr_steps = (ud->start_att - ud->end_att) / ud->ramp_steps;
-	} else {
+	nr_steps = calc_nr_steps(ud);
+	
+	if (!nr_steps) {
 		printf("start and end attenuation are equal\n");
 		return 1;
 	}
@@ -421,11 +432,9 @@ set_triangle(int id, struct user_data *ud)
 	int i, cur_att, nr_steps;
 	check_att_limits(id, ud, TRIANGLE);
 
-	if (ud->start_att < ud->end_att) {
-		nr_steps = (ud->end_att - ud->start_att) / ud->ramp_steps;
-	} else if (ud->start_att > ud->end_att) {
-		nr_steps= (ud->start_att - ud->end_att) / ud->ramp_steps;
-	} else {
+	nr_steps = calc_nr_steps(ud);
+
+	if (!nr_steps) {
 		printf("start and end attenuation are equal\n");
 		return 1;
 	}
