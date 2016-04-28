@@ -239,57 +239,6 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 	return 1;
 }
 
-/* 
- * print data set by user
- * @param ud: user data struct
- */
-void
-print_userdata(struct user_data *ud)
-{
-	printf("return address start print: %p\n", __builtin_return_address(0));
-	printf("printing user data\n");
-	char tu[20];
-
-	if (ud->us)
-		strncpy(tu ,"microseconds\0", sizeof(tu));
-	else if(ud->ms)
-		strncpy(tu ,"milliseconds\0", sizeof(tu));
-	else
-		strncpy(tu ,"seconds\0", sizeof(tu));
-
-	if (ud->simple == 1) {
-		printf("attenuation set to %.2fdB\n", (double)ud->attenuation / 4);
-		if (ud->atime != 0)
-			printf("time for attenuation set to %ld %s \n", ud->atime, tu);
-	}
-	if (ud->ramp == 1) {
-		printf("attenuation set to ramp\n");
-		printf("ramp steps set to %.2fdB\n", (double)ud->ramp_steps / 4);
-		printf("start attenuation set to %.2fdB\n", (double)ud->start_att / 4);
-		printf("end attenuation set to %.2fdB\n", (double)ud->end_att / 4);
-		printf("time per step set to %ld %s\n", ud->atime, tu);
-	}
-	if (ud->triangle == 1) {
-		printf("attenuation form set to both sided ramp\n");
-		printf("ramp steps set to %.2fdB\n", (double)ud->ramp_steps / 4);
-		printf("start attenuation set to %.2fdB\n", (double)ud->start_att / 4);
-		printf("maximal attenuation set to %.2fdB\n", (double)ud->end_att / 4);
-		printf("time per step set to %ld %s\n", ud->atime, tu);
-	}
-	if (ud->cont == 1)
-		printf("continous behavior is set\n");
-		if (ud->runs > 1)
-			printf("for %d runs\n", ud->runs);
-	if (ud->sine == 1)
-		printf("attenuation set to sine\n");
-
-	printf("printing file path\n");
-	if (ud->file == 1)
-		printf("path to config file: %s\n", ud->path);
-	printf("return address end print: %p\n", __builtin_return_address(0));
-	printf("printing user data\n");
-}
-
 /*
  * reset user data
  * @param ud: user data struct

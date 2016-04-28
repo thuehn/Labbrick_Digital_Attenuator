@@ -768,7 +768,7 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 
 	print_dev_info(SINGLE_DEV);
 	if (ud->info)
-		print_userdata(ud);
+		print_dev_info(SINGLE_DEV_ID);
 	status = fnLDA_InitDevice(working_devices[SINGLE_DEV]);
 	if (status != 0) {
 		printf("initialising device 1 failed\n");
