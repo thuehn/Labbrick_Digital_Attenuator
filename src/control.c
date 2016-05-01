@@ -75,11 +75,12 @@ susleep(unsigned long usec)
 void
 print_dev_info(int id)
 {
-	if ((fnLDA_GetAttenuation(id) / 4) < 0)
-		printf("Attenuation is set to 0dB\n");
-	else
-		printf("Attenuation is set to: %.2fdB\n",
-		       (double)(fnLDA_GetAttenuation(id) / 4));
+	printf("You can set attenuation steps in %.2fdB steps\n",
+		(double)(fnLDA_GetDevResolution(SINGLE_DEV_ID)) / 4);
+	printf("min attenuation: %.2fdB\n",
+		(double)fnLDA_GetMinAttenuation(id) / 4);
+	printf("max attenuation: %.2fdB\n",
+		(double)fnLDA_GetMaxAttenuation(id) / 4);
 }
 
 /*
@@ -626,7 +627,6 @@ start_device(void *arguments)
 {
 	struct thread_arguments *args = arguments;
 	struct user_data *ud = allocate_user_data();
-	printf("size of user_data %ld\n",sizeof(struct user_data));
 	clear_userdata(ud);
 	read_file(args->path, args->id, ud);
 	free(ud);
@@ -684,11 +684,6 @@ handle_multi_dev(int argc, char *argv[])
 	get_serial_and_name(device_count, device_name);
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
 	printf("%d active devices found\n", nr_active_devices);
-
-	for (id = 0; id <= nr_active_devices; id++) {
-		if ((strncmp(argv[1], "-i", strlen(argv[1]))) == 0)
-			print_dev_info(id);
-	}
 
 	/*
 	 * initiate devices
@@ -766,9 +761,6 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 		exit(1);
 	}
 
-	print_dev_info(SINGLE_DEV);
-	if (ud->info)
-		print_userdata(ud);
 	status = fnLDA_InitDevice(working_devices[SINGLE_DEV]);
 	if (status != 0) {
 		printf("initialising device 1 failed\n");
@@ -776,9 +768,9 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 	}
 	else
 		printf("initialized device %d successfully\n", SINGLE_DEV_ID);
+
 	if (ud->info)
-		printf("You can set attenuation steps in %.2fdB steps\n",
-			(double)(fnLDA_GetDevResolution(SINGLE_DEV_ID)) / 4);
+		print_dev_info(SINGLE_DEV_ID);
 
 	strncpy(message, get_device_data(working_devices[SINGLE_DEV]),
 		sizeof(message));
@@ -849,11 +841,6 @@ main(int argc, char *argv[])
 	get_serial_and_name(device_count, device_name);
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
 	printf("%d active devices found\n", nr_active_devices);
-
-	if ((strncmp(argv[1], "-i", strlen(argv[1]))) == 0) {
-		for (id = 0; id < nr_active_devices; id++)
-			print_dev_info(id);
-	}
 
 	handle_single_dev(ud, argc, argv, working_devices);
 	free(ud);

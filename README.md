@@ -26,7 +26,7 @@ A typical experimental setup, where the digital anttenuator is connecto to a Lap
 
 1. start our tool with  "sudo ./attenuator_lab_brick -h" to get a list of supported commands
 2. either you set the attenuation level directly or for more complex attenuation patters via a csv file
-3. we support rigth now full dB values only, where the minimum is 0dB and the maximum is 63dB
+3. You can get the attenuator frequency resolution with sudo ./attenuator_lab_brck -i. We do support 0.25dB steps
 
 ## Example usage with a csv file
 
