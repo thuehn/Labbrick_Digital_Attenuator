@@ -294,6 +294,7 @@ check_att_limits(int id, struct user_data *ud, int check)
 /*
  * calculate number of steps for triangle and ramp function
  * @param ud: user data struct
+ * @return: returns number of steps to get from low to high
  */
 int
 calc_nr_steps(struct user_data *ud)
@@ -324,6 +325,7 @@ attenuation_time(struct user_data *ud)
  * attenuation stepwise up or down to get a ramp like form
  * @param id: device id
  * @param ud: user data struct
+ * @return: returns 1 on error else 0
  */
 int
 set_ramp(int id, struct user_data *ud)
@@ -426,6 +428,7 @@ set_attenuation(int id, struct user_data *ud)
  * log it.
  * @param id: device id
  * @param ud: user data struct
+ * @return: returns 1 on error else 0
  */
 int
 set_triangle(int id, struct user_data *ud)
