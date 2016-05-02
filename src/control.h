@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include "input.h"
 
+#define ERR "\x1B[31m" "[ERROR]: " "\x1B[0m"
+#define WARN "\x1B[33m" "[WARNING: " "\x1B[0m"
+#define INFO "\x1B[32m" "[INFO]: " "\x1B[0m"
+
 char errmsg[64];
 
 void get_serial_and_name(int device_count, char *device_name);
