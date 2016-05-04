@@ -216,9 +216,6 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 		else if (strncmp(argv[i], "-ramp",
 			    strlen(argv[i])) == 0)
 				ud->ramp = 1;
-		else if (strncmp(argv[i], "-sine",
-			    strlen(argv[i])) == 0)
-				ud->sine = 1;
 		else if (strncmp(argv[i],"-triangle",
 			    strlen(argv[i])) == 0)
 				ud->triangle = 1;
@@ -252,7 +249,6 @@ clear_userdata(struct user_data *ud)
 	ud->start_att = 0;
 	ud->end_att = 0;
 	ud->ramp = 0;
-	ud->sine = 0;
 	ud->triangle = 0;
 	ud->ramp_steps = 1;
 	ud->cont = 0;
