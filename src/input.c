@@ -200,6 +200,7 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 			ud->us = 1;
 			printf(INFO "time in useconds\n");
 		}
+
 		else if (strncmp(argv[i], "-l", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc) {
 				strncpy(ud->logfile, argv[i + 1], MAX_LENGTH - 1);
@@ -212,17 +213,15 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 			}
 		}
 
-		else if(strncmp(argv[i], "-p", strlen(argv[i])) == 0) {
-			if (strncmp(argv[i + 1], "-ramp",
-			    strlen(argv[i + 1])) == 0)
+		else if (strncmp(argv[i], "-ramp",
+			    strlen(argv[i])) == 0)
 				ud->ramp = 1;
-			else if (strncmp(argv[i + 1], "-sine",
-			    strlen(argv[i + 1])) == 0)
+		else if (strncmp(argv[i], "-sine",
+			    strlen(argv[i])) == 0)
 				ud->sine = 1;
-			else if (strncmp(argv[i + 1],"-triangle",
-			    strlen(argv[i + 1])) == 0)
+		else if (strncmp(argv[i],"-triangle",
+			    strlen(argv[i])) == 0)
 				ud->triangle = 1;
-		}
 
 		else if (strncmp(argv[i], "-r", strlen(argv[i])) == 0) {
 			ud->cont = 1;
