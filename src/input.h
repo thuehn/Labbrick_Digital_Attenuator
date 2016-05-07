@@ -22,6 +22,7 @@ struct user_data
 	unsigned int ms;
 	unsigned int us;
 	unsigned int log;
+	unsigned int quiet;
 	char path[128];
 	char logfile[128];
 };
