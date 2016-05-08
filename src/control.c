@@ -249,8 +249,9 @@ check_att_limits(int id, struct user_data *ud, int check)
 		} else {
 			fnLDA_SetAttenuation(id, (ud->attenuation));
 			log_attenuation(ud->attenuation, ud);
-			printf(INFO "set device to %.2fdB attenuation\n",
-				(double)(fnLDA_GetAttenuation(id)) / 4);
+			if (!ud->quiet)
+				printf(INFO "set device to %.2fdB attenuation\n",
+					(double)(fnLDA_GetAttenuation(id)) / 4);
 		}
 	}
 
@@ -314,7 +315,7 @@ attenuation_time(struct user_data *ud)
 {
 	if (ud->us == 1)
 		susleep(TIME_MICROS(ud->atime));
-	else if(ud->ms == 1)
+	else if (ud->ms == 1)
 		susleep(TIME_MILLIS(ud->atime));
 	else
 		susleep(TIME_SECONDS(ud->atime));
@@ -349,12 +350,14 @@ set_ramp(int id, struct user_data *ud)
 				cur_att = fnLDA_GetAttenuation(id);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
-				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
 			}
 			cur_att = fnLDA_GetAttenuation(id);
-			printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
 		}
 	}
 	if (ud->cont && (ud->start_att > ud->end_att)) {
@@ -366,12 +369,15 @@ set_ramp(int id, struct user_data *ud)
 				cur_att = fnLDA_GetAttenuation(id);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
-				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
 			}
 			cur_att = fnLDA_GetAttenuation(id);
-			printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 		}
 	}
 	if (ud->start_att < ud->end_att) {
@@ -382,8 +388,9 @@ set_ramp(int id, struct user_data *ud)
 			cur_att = fnLDA_GetAttenuation(id);
 			fnLDA_SetAttenuation(id,
 				cur_att + ud->ramp_steps);
-			printf(INFO "attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
 	}
@@ -395,14 +402,17 @@ set_ramp(int id, struct user_data *ud)
 			cur_att = fnLDA_GetAttenuation(id);
 			fnLDA_SetAttenuation(id,
 				cur_att - ud->ramp_steps);
-			printf(INFO "attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
 	}
 	attenuation_time(ud);
 	cur_att = fnLDA_GetAttenuation(id);
-	printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+	if (!ud->quiet)
+		printf(INFO "attenuation set to %.2fdB\n",
+			((double)cur_att) / 4);
 
 	return 0;
 }
@@ -450,8 +460,9 @@ set_triangle(int id, struct user_data *ud)
 			for (i = 0; i < nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
-				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
@@ -459,8 +470,9 @@ set_triangle(int id, struct user_data *ud)
 			for (i = 1; i <= nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
-				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
@@ -473,16 +485,18 @@ set_triangle(int id, struct user_data *ud)
 		for (i = 0; i < nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
-			printf(INFO "attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
 		for (i = 1; i < nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
-			printf(INFO "attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			fnLDA_SetAttenuation(id, cur_att - ud->ramp_steps);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
@@ -494,8 +508,9 @@ set_triangle(int id, struct user_data *ud)
 			for (i = 0; i < nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
-				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
@@ -503,8 +518,9 @@ set_triangle(int id, struct user_data *ud)
 			for (i = 1; i <= nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
-				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
@@ -517,16 +533,18 @@ set_triangle(int id, struct user_data *ud)
 		for (i = 0; i < nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
-			printf(INFO "attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			fnLDA_SetAttenuation(id, cur_att - ud->ramp_steps);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
 		for (i = 1; i <= nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
-			printf(INFO "attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
@@ -535,7 +553,8 @@ set_triangle(int id, struct user_data *ud)
 	}
 	attenuation_time(ud);
 	cur_att = fnLDA_GetAttenuation(id);
-	printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+	if (!ud->quiet)
+		printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
 	return 0;
 }
 
@@ -651,10 +670,11 @@ close_device(int nr_active_devices, DEVID *working_devices)
 		if (status != 0) {
 			printf(ERR "shutting down device %d failed\n",
 				id);
-			printf(INFO "%d\n", nr_active_devices);
 		}
 		else
-			printf(INFO "shut down of device %d was successful\n", id);
+			if (!ud->quiet)
+				printf(INFO "shut down of device %d \
+					was successful\n", id);
 	}
 }
 
@@ -764,13 +784,19 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 		exit(1);
 	}
 
+	if (!ud->quiet) {
+		version = fnLDA_LibVersion();
+		printf(INFO "you are using libversion %s\n", version);
+	}
+
 	status = fnLDA_InitDevice(working_devices[SINGLE_DEV]);
 	if (status != 0) {
 		printf(ERR "initialising device 1 failed\n");
 		return 0;
 	}
 	else
-		printf(INFO "initialized device %d successfully\n", SINGLE_DEV_ID);
+		if (!ud->quiet)
+			printf(INFO "initialized device %d successfully\n", SINGLE_DEV_ID);
 
 	if (ud->info)
 		print_dev_info(SINGLE_DEV_ID);
@@ -779,7 +805,8 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 		sizeof(message));
 	if (strncmp(message,"Successfully checked device\n",
 	    strlen(message)) == 0) {
-		printf(INFO "%s",message);
+		if (!ud->quiet)
+			printf(INFO "%s",message);
 	} else {
 		printf(ERR "check failed for the device\n");
 		printf(ERR "%s\n", message);

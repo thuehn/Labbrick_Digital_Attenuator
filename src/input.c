@@ -236,6 +236,7 @@ clear_userdata(struct user_data *ud)
 	ud->info = 0;
 	ud->runs = 1;
 	ud->log = 0;
+	ud->quiet=0;
 	memset(ud->path, '\0', sizeof(ud->path));
 	memset(ud->logfile, '\0', sizeof(ud->logfile));
 }
