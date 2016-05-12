@@ -337,8 +337,6 @@ set_ramp(int id, struct user_data *ud)
 	nr_steps = calc_nr_steps(ud);
 	
 	if (!nr_steps) {
-		printf(WARN "in ramp\n");
-		printf(WARN "ramp: %d\n",ud->ramp);
 		printf(ERR "start and end attenuation are equal\n");
 		return 1;
 	}
@@ -451,7 +449,6 @@ set_triangle(int id, struct user_data *ud)
 	nr_steps = calc_nr_steps(ud);
 
 	if (!nr_steps) {
-		printf(WARN "in triangle\n");
 		printf(ERR "start and end attenuation are equal\n");
 		return 1;
 	}
@@ -585,9 +582,6 @@ void
 set_data(struct user_data *ud)
 {
 	int i, res = 0;
-	printf(WARN "ud->ramp %d \n", ud->ramp);
-	printf(WARN "ud->cont %d \n", ud->cont);
-	printf(WARN "ud->file %d \n", ud->file);
 	if (ud->simple == 1) {
 		set_attenuation(SINGLE_DEV_ID, ud);
 	} else if (ud->triangle && ud->cont) {
@@ -813,7 +807,7 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 		call_help();
 		exit(1);
 	}
-	printf(WARN "single dev\n");
+	
 	if (!ud->quiet) {
 		version = fnLDA_LibVersion();
 		printf(INFO "you are using libversion %s\n", version);
