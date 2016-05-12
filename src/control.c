@@ -203,6 +203,10 @@ call_help(void)
 	printf("\t-r\n");
 	printf("\r\n");
 
+	printf("-remove [INFO] output\n");
+	printf("\t-q\n");
+	printf("\r\n");
+
 	printf("-repeat form, or file input for several times\n");
 	printf("\t-rr <#runs>\n");
 	printf("\r\n");

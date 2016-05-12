@@ -17,7 +17,7 @@ void set_attenuation(int id,struct user_data *ud);
 int set_triangle(int id, struct user_data *ud);
 void print_dev_info(int id);
 int check_multi_device(char *argv[]);
-int check_quiet(int argc, char *argv);
+int check_quiet(int argc, char *argv[]);
 
 #endif
 
