@@ -122,7 +122,9 @@ log_attenuation(unsigned int att, struct user_data *ud)
 int
 get_parameters(int argc, char *argv[], struct user_data *ud)
 {
-	int i;
+	int i, quiet;
+
+	quiet = check_quiet(argc, argv);
 
 	for (i = 1; i < argc; i++) {
 		printf(WARN "argv[%d]: %s\n",i, argv[i]);
@@ -181,19 +183,23 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 		} else if (strncmp(argv[i],"s", strlen(argv[i])) == 0) {
 				ud->ms = 0;
 				ud->us = 0;
-				printf(INFO "time in seconds\n");
+				if (!quiet)
+					printf(INFO "time in seconds\n");
 		} else if (strncmp(argv[i],"ms", strlen(argv[i])) == 0) {
 			ud->ms = 1;
-			printf(INFO "time in milliseconds\n");
+			if (!quiet)
+				printf(INFO "time in milliseconds\n");
 		} else if (strncmp(argv[i],"us", strlen(argv[i])) == 0) {
 			ud->us = 1;
-			printf(INFO "time in useconds\n");
+			if (!quiet)
+				printf(INFO "time in useconds\n");
 		} else if (strncmp(argv[i], "-l", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc) {
 				strncpy(ud->logfile, argv[i + 1], MAX_LENGTH - 1);
 				ud->logfile[MAX_LENGTH - 1] = '\0';
 				ud->log = 1;
-				printf(INFO "logging to file: %s\n", ud->logfile);
+				if (!quiet)
+					printf(INFO "logging to file: %s\n", ud->logfile);
 			} else {
 				printf(ERR "please specify a logfile filename\n");
 				return 0;
