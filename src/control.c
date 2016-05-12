@@ -192,7 +192,7 @@ call_help(void)
 
 	printf("-to use a .csv file\n");
 	printf("\t-f path/to/file\n");
-	printf("csv file is expected to have time;attenuation format\n");
+	printf("\tcsv file is expected to have time;attenuation format\n");
 	printf("\r\n");
 
 	printf("-log attenuation changes to a .csv file\n");
