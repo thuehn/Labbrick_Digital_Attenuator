@@ -337,6 +337,8 @@ set_ramp(int id, struct user_data *ud)
 	nr_steps = calc_nr_steps(ud);
 	
 	if (!nr_steps) {
+		printf(WARN "in ramp\n");
+		printf(WARN "ramp: %d\n",ud->ramp);
 		printf(ERR "start and end attenuation are equal\n");
 		return 1;
 	}
@@ -449,6 +451,7 @@ set_triangle(int id, struct user_data *ud)
 	nr_steps = calc_nr_steps(ud);
 
 	if (!nr_steps) {
+		printf(WARN "in triangle\n");
 		printf(ERR "start and end attenuation are equal\n");
 		return 1;
 	}
@@ -582,7 +585,9 @@ void
 set_data(struct user_data *ud)
 {
 	int i, res = 0;
-
+	printf(WARN "ud->ramp %d \n", ud->ramp);
+	printf(WARN "ud->cont %d \n", ud->cont);
+	printf(WARN "ud->file %d \n", ud->file);
 	if (ud->simple == 1) {
 		set_attenuation(SINGLE_DEV_ID, ud);
 	} else if (ud->triangle && ud->cont) {
@@ -661,7 +666,7 @@ start_device(void *arguments)
  * @param working_devices: array of active devices
  */
 void
-close_device(int nr_active_devices, DEVID *working_devices)
+close_device(int nr_active_devices, DEVID *working_devices, int quiet)
 {
 	int id, status = 0;
 
@@ -672,10 +677,26 @@ close_device(int nr_active_devices, DEVID *working_devices)
 				id);
 		}
 		else
-			if (!ud->quiet)
-				printf(INFO "shut down of device %d \
-					was successful\n", id);
+			if (!quiet)
+				printf(INFO "shut down of device %d "
+					"was successful\n", id);
 	}
+}
+
+/*
+ * check if quiet flag is enabled
+ * @param argc: argument count
+ * @param argv: array of function arguments
+ * @return returns 1 if -q is set else 0
+ */
+int
+check_quiet(int argc, char *argv[])
+{
+	int i = 0;
+	for (;i < argc; i++)
+		if (strncmp(argv[i], "-q", strlen(argv[i])) == 0)
+			return 1;
+	return 0;
 }
 
 /*
@@ -689,7 +710,7 @@ handle_multi_dev(int argc, char *argv[])
 	struct thread_arguments args;
 	pthread_t threads[MAXDEVICES];
 	int device_count = 0;
-	int id, nr_active_devices, file_count, ret, state;
+	int id, nr_active_devices, file_count, ret, state, quiet;
 	DEVID working_devices[MAXDEVICES];
 	char message[64];
 	char device_name[MAX_MODELNAME];
@@ -697,14 +718,21 @@ handle_multi_dev(int argc, char *argv[])
 
 	device_count = fnLDA_GetNumDevices();
 
-	if (device_count == 0)
-		printf(INFO "There is no attenuator connected\n");
-	else if (device_count > 1)
-		printf(INFO "There are %d attenuators connected\n", device_count);
-	else
-		printf(INFO "There is %d attenuator connected\n", device_count);
+	quiet = check_quiet(argc, argv);
 
-	get_serial_and_name(device_count, device_name);
+	if (device_count == 0) {
+		printf(ERR "There is no attenuator connected\n");
+	} else if (device_count > 1) {
+		if (!quiet)
+			printf(INFO "There are %d attenuators connected\n", device_count);
+	} else {
+		if (!quiet)
+			printf(INFO "There is %d attenuator connected\n", device_count);
+	}
+
+	if (!quiet)
+		get_serial_and_name(device_count, device_name);
+
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
 	printf("%d active devices found\n", nr_active_devices);
 
@@ -718,7 +746,8 @@ handle_multi_dev(int argc, char *argv[])
 				id);
 			continue;
 		}
-		printf(INFO "initialized device %d successfully\n", id);
+		if (!quiet)
+			printf(INFO "initialized device %d successfully\n", id);
 	}
 
 	/*
@@ -758,7 +787,7 @@ handle_multi_dev(int argc, char *argv[])
 			printf(ERR "Failed to join thread! Error Code: %d\n", ret);
 	}
 	
-	close_device(nr_active_devices, working_devices);
+	close_device(nr_active_devices, working_devices, 1);
 	return;
 }
 
@@ -775,6 +804,7 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 {
 	int status;
 	char message[64];
+	char *version;
 
 	clear_userdata(ud);
 
@@ -783,7 +813,7 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 		call_help();
 		exit(1);
 	}
-
+	printf(WARN "single dev\n");
 	if (!ud->quiet) {
 		version = fnLDA_LibVersion();
 		printf(INFO "you are using libversion %s\n", version);
@@ -814,7 +844,7 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 	}
 
 	set_data(ud);
-	close_device(SINGLE_DEV_ID, working_devices);
+	close_device(SINGLE_DEV_ID, working_devices, ud->quiet);
 	return 1;
 }
 
@@ -825,18 +855,16 @@ int
 main(int argc, char *argv[])
 {
 	int device_count = 0;
-	int id, nr_active_devices;
+	int id, nr_active_devices, quiet;
 	DEVID working_devices[MAXDEVICES];
 	char device_name[MAX_MODELNAME];
-	char *version;
 
 	/* get the uid of caller */
 	uid_t uid = geteuid();
 	fnLDA_Init();
-	version = fnLDA_LibVersion();
-	printf(INFO "you are using libversion %s\n", version);
 
 	fnLDA_SetTestMode(FALSE);
+	quiet = check_quiet(argc, argv);
 
 	if (uid != 0) {
 		printf(ERR "This tool needs to be run as root to access USB ports\n");
@@ -853,7 +881,8 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 	if (check_multi_device(argv)){
-		printf(INFO "multidevice support enabled\n");
+		if (!quiet)
+			printf(INFO "multidevice support enabled\n");
 		handle_multi_dev(argc, argv);
 		exit(0);
 	}
@@ -861,16 +890,22 @@ main(int argc, char *argv[])
 	struct user_data *ud = allocate_user_data();
 	device_count = fnLDA_GetNumDevices();
 
-	if (device_count == 0)
+	if (device_count == 0) {
 		printf(ERR "There is no attenuator connected\n");
-	else if (device_count > 1)
-		printf(INFO "There are %d attenuators connected\n", device_count);
-	else
-		printf(INFO "There is %d attenuator connected\n", device_count);
+	} else if (device_count > 1) {
+		if (!quiet)
+			printf(INFO "There are %d attenuators connected\n", device_count);
+	} else {
+		if (!quiet)
+			printf(INFO "There is %d attenuator connected\n", device_count);
+	}
 
-	get_serial_and_name(device_count, device_name);
+	if (!quiet)
+		get_serial_and_name(device_count, device_name);
+
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
-	printf(INFO "%d active devices found\n", nr_active_devices);
+	if (!quiet)
+		printf(INFO "%d active device(s) found\n", nr_active_devices);
 
 	handle_single_dev(ud, argc, argv, working_devices);
 	free(ud);

@@ -124,7 +124,9 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 {
 	int i;
 
+	printf(WARN "before param ud->ramp %d \n",ud->ramp);
 	for (i = 1; i < argc; i++) {
+		printf(WARN "argv[%d]: %s\n",i, argv[i]);
 		if (strncmp(argv[i], "-a", strlen(argv[i])) == 0) {
 			ud->simple = 1;
 			if ((i + 1) < argc)
@@ -174,6 +176,7 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 				printf(ERR "no file specified\n");
 				return 0;
 			}
+			printf(WARN "in file param ud->ramp %d\n",ud->ramp);
 		} else if (strncmp(argv[i], "-q", strlen(argv[i])) == 0) {
 			ud->quiet = 1;
 		/* set time unit us/ms/s */
@@ -198,19 +201,22 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 				return 0;
 			}
 		} else if (strncmp(argv[i], "-ramp", strlen(argv[i])) == 0) {
+			printf(WARN "in ramp ud->ramp %d\n",ud->ramp);
 				ud->ramp = 1;
+			printf(WARN "after ramp ud->ramp %d\n",ud->ramp);
 		} else if (strncmp(argv[i],"-triangle", strlen(argv[i])) == 0) {
 				ud->triangle = 1;
 		}else if (strncmp(argv[i], "-r", strlen(argv[i])) == 0) {
 			ud->cont = 1;
 		} else if (strncmp(argv[i], "-rr", strlen(argv[i])) == 0) {
-			if ((i + 1) < argc)
+			if ((i + 1) < argc) {
 				ud->runs = atoi(argv[i+1]);
-			else {
+			} else {
 				ud->runs = 1;
 			}
 		}
 	}
+	printf(WARN "in param ud->ramp: %d\n", ud->ramp);
 	return 1;
 }
 
