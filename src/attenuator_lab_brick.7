@@ -12,16 +12,16 @@ This is a commandline tool for the digital Lab Brick attenuator from Vaunix. It
 allows you to control multiple device and set attenuation individually for each
 attenuator.
 .SH OPTIONS
--a <attenuation in dB>
+.IP "-a <attenuation in dB>"
 	set attenuation to the given dB value
--t <time>
-	keep the attenuation for a given amount of time
-	time can be set in s|ms|us
-	if no time unit is specified seconds will be used
-	one time unit is used as standard
--ramp
+.IP "-t <time>"
+.BR "keep the attenuation for a given amount of time
+time can be set in s|ms|us
+if no time unit is specified seconds will be used
+one time unit is used as standard"
+.IP "-ramp"
 	set attenuation in the form of a ramp
--triangle
+.IP "-triangle"
 	set attenuation in the form of a triangle
 .SH BUGS
 Multi device support is currently not tested. If you find any bugs please report
