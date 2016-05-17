@@ -745,11 +745,12 @@ handle_multi_dev(int argc, char *argv[])
 			printf(INFO "There is %d attenuator connected\n", device_count);
 	}
 
-	if (!quiet)
+	if (!quiet) {
 		get_serial_and_name(device_count, device_name);
 
-	nr_active_devices = fnLDA_GetDevInfo(working_devices);
-	printf("%d active devices found\n", nr_active_devices);
+		nr_active_devices = fnLDA_GetDevInfo(working_devices);
+		printf(INFO "%d active devices found\n", nr_active_devices);
+	}
 
 	/*
 	 * initiate devices
