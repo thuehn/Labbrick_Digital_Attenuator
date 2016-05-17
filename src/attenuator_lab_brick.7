@@ -1,0 +1,30 @@
+.TH attenuator_lab_brick 7 "17.05.2016" "version 1.0"
+.SH NAME
+attenuator_lab_brick - a commandline tool for the vaunix digital attenuator
+.SH SYNOPSIS
+.B attenuator_lab_brick [-h] [-a <attenuation in dB>] [-t <time in>]
+ [s|ms|us] [-ramp] [-triangle] [-start <attenuation in dB>] [-i]
+ [-end <attenuation in dB>] [-f path/to/file>] [-l <path/to/file>] [-r]
+ [-rr <number of reruns>] [-q] [-md <path/to/file1> <path/to/file2>...]
+.B
+.SH DESCRIPTION
+This is a commandline tool for the digital Lab Brick attenuator from Vaunix. It
+allows you to control multiple device and set attenuation individually for each
+attenuator.
+.SH OPTIONS
+-a <attenuation in dB>
+	set attenuation to the given dB value
+-t <time>
+	keep the attenuation for a given amount of time
+	time can be set in s|ms|us
+	if no time unit is specified seconds will be used
+	one time unit is used as standard
+-ramp
+	set attenuation in the form of a ramp
+-triangle
+	set attenuation in the form of a triangle
+.SH BUGS
+Multi device support is currently not tested. If you find any bugs please report
+them to stefan.venz@protonmail.com or open an issue on https://github.com/ikstream/Labbrick_Digital_Attenuator
+.SH AUTHOR
+Stefan Venz (ikstream) ,stefan.venz@protonmail.com>
