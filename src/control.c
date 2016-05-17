@@ -765,9 +765,8 @@ handle_multi_dev(int argc, char *argv[])
 		if (!quiet)
 			printf(INFO "initialized device %d successfully\n", id);
 
-		if (info) {
+		if (info)
 			print_dev_info(id);
-		}
 	}
 
 	/*
