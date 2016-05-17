@@ -698,6 +698,22 @@ check_quiet(int argc, char *argv[])
 }
 
 /*
+ * check if info flag is enabled
+ * @param argc: argument count
+ * @param argv: array of function arguments
+ * @return returns 1 if -i is set else 0
+ */
+int
+check_info(int argc, char *argv[])
+{
+	int i = 0;
+	for (;i < argc; i++)
+		if (strncmp(argv[i], "-i", strlen(argv[i])) == 0)
+			return 1;
+	return 0;
+}
+
+/*
  * start thread for each active device
  * @param argc: argument count
  * @param argv: arguments given by the user
@@ -708,7 +724,7 @@ handle_multi_dev(int argc, char *argv[])
 	struct thread_arguments args;
 	pthread_t threads[MAXDEVICES];
 	int device_count = 0;
-	int id, nr_active_devices, file_count, ret, state, quiet;
+	int id, nr_active_devices, file_count, ret, state, quiet, info;
 	DEVID working_devices[MAXDEVICES];
 	char message[64];
 	char device_name[MAX_MODELNAME];
@@ -717,6 +733,7 @@ handle_multi_dev(int argc, char *argv[])
 	device_count = fnLDA_GetNumDevices();
 
 	quiet = check_quiet(argc, argv);
+	info = check_info(argc, argv);
 
 	if (device_count == 0) {
 		printf(ERR "There is no attenuator connected\n");
@@ -744,8 +761,13 @@ handle_multi_dev(int argc, char *argv[])
 				id);
 			continue;
 		}
+		
 		if (!quiet)
 			printf(INFO "initialized device %d successfully\n", id);
+
+		if (info) {
+			print_dev_info(id);
+		}
 	}
 
 	/*
