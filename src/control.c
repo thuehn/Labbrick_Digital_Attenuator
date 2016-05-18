@@ -300,6 +300,22 @@ check_att_limits(int id, struct user_data *ud, int check)
 	}
 }
 
+void
+check_stepsize(struct user_data *ud, int id)
+{
+	if (ud->ramp_steps > fnLDA_GetMaxAttenuation(id))
+		ud->ramp_steps = fnLDA_GetMaxAttenuation(id);
+
+	if (ud->start_att < ud->end_att) {
+		if (ud->ramp_steps > (ud->end_att - ud->start_att)) 
+			ud->ramp_steps = ud->end_att - ud->start_att;
+	} else {
+		if (ud->ramp_steps > (ud->start_att - ud->end_att))
+			ud->ramp_steps = ud->start_att - ud->end_att;
+	}
+	printf(WARN "step size was to large. reduced to %d\n",ud->ramp_steps / 4);
+}
+
 /*
  * calculate number of steps for triangle and ramp function
  * @param ud: user data struct
@@ -341,7 +357,8 @@ set_ramp(int id, struct user_data *ud)
 {
 	int i, cur_att, nr_steps;
 	check_att_limits(id, ud, RAMP);
-
+	
+	check_stepsize(ud, id);
 	nr_steps = calc_nr_steps(ud);
 	
 	if (!nr_steps) {
@@ -454,6 +471,7 @@ set_triangle(int id, struct user_data *ud)
 	int i, cur_att, nr_steps;
 	check_att_limits(id, ud, TRIANGLE);
 
+	check_stepsize(ud, id);
 	nr_steps = calc_nr_steps(ud);
 
 	if (!nr_steps) {
