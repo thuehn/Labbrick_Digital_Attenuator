@@ -270,7 +270,7 @@ check_att_limits(int id, struct user_data *ud, int check)
 				(double)ud->start_att / 4,
 				(double)fnLDA_GetMinAttenuation(id) / 4);
 			printf(WARN "start attenuation has been set to %.2fdB\n",
-				(double)fnLDA_GetMinAttenuation(id));
+				(double)fnLDA_GetMinAttenuation(id) / 4);
 			ud->start_att = fnLDA_GetMinAttenuation(id);
 		}
 		if (ud->start_att > fnLDA_GetMaxAttenuation(id)) {
@@ -292,9 +292,9 @@ check_att_limits(int id, struct user_data *ud, int check)
 		if (ud->end_att > fnLDA_GetMaxAttenuation(id)) {
 			printf(WARN "%.2f is above maximal attenuation of %.2f\n",
 				(double)ud->end_att,
-				(double)fnLDA_GetMaxAttenuation(id));
+				(double)fnLDA_GetMaxAttenuation(id) / 4);
 			printf(WARN "final attenuation has been set to %.2f\n",
-				(double)fnLDA_GetMinAttenuation(id) / 4);
+				(double)fnLDA_GetMaxAttenuation(id) / 4);
 			ud->end_att = fnLDA_GetMaxAttenuation(id);
 		}
 	}
