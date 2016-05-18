@@ -203,6 +203,10 @@ call_help(void)
 	printf("\t-r\n");
 	printf("\r\n");
 
+	printf("print additional device information\n");
+	printf("\t-i\n");
+	printf("\r\n");
+
 	printf("-remove [INFO] output\n");
 	printf("\t-q\n");
 	printf("\r\n");
@@ -745,10 +749,10 @@ handle_multi_dev(int argc, char *argv[])
 			printf(INFO "There is %d attenuator connected\n", device_count);
 	}
 
+	nr_active_devices = fnLDA_GetDevInfo(working_devices);
 	if (!quiet) {
 		get_serial_and_name(device_count, device_name);
 
-		nr_active_devices = fnLDA_GetDevInfo(working_devices);
 		printf(INFO "%d active devices found\n", nr_active_devices);
 	}
 
