@@ -228,7 +228,7 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 void
 clear_userdata(struct user_data *ud)
 {
-	ud->atime = SLEEP_TIME;
+	ud->atime = 1;
 	ud->us = 0;
 	ud->ms = 0;
 	ud->attenuation = 0;
