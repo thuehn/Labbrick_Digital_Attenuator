@@ -291,7 +291,7 @@ check_att_limits(int id, struct user_data *ud, int check)
 		}
 		if (ud->end_att > fnLDA_GetMaxAttenuation(id)) {
 			printf(WARN "%.2f is above maximal attenuation of %.2f\n",
-				(double)ud->end_att,
+				(double)ud->end_att / 4,
 				(double)fnLDA_GetMaxAttenuation(id) / 4);
 			printf(WARN "final attenuation has been set to %.2f\n",
 				(double)fnLDA_GetMaxAttenuation(id) / 4);
