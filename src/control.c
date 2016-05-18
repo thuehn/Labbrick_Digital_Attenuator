@@ -499,7 +499,7 @@ set_triangle(int id, struct user_data *ud)
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
-		for (i = 1; i < nr_steps; i++) {
+		for (i = 1; i <= nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
 			if (!ud->quiet)
