@@ -1,32 +1,46 @@
-# As LDAhid is missing in git and not under open source
-# license you will need to download it from LabView website
+.EXPORT_ALL_VARIABLES:
 
-# TODO: add dependecies checks for libus, gtk and the other
-# 	stuff needed for this Program to run
+DESTDIR =
+PREFIX = /usr/local
+MANDIR = /usr/share/man/man7/
+CFLAGS= -g -O2 -Wall -Wno-unused-variable
+LDFLAGS=-lm -lpthread -lusb -lrt
 
 CC=gcc
-CFLAGS=-lm -lpthread -lusb -lrt -g -O2 -Wall -Wno-unused-variable
+LD=gcc
 
-all: clean_up clean console lab_brick clean
+RM=rm -f
 
-lab_brick: ldahid.o control.o input.o
+DEPS=LDAhid.h
 
-ldahid.o: LDAhid.c LDAhid.h
-	$(CC) -o ldahid.o -c LDAhid.c $(CFLAGS)
+INSTALL_DIR = install -m 0755 -d
+INSTALL_BIN = install -m 0755
 
-control.o: control.c control.h
-	$(CC) -o control.o -c control.c $(CFLAGS)
+ZIP= gzip
+attenuator: LDAhid.o control.o input.o
+	$(LD) $(LDFLAGS) -o attenuator_lab_brick LDAhid.o control.o input.o
 
-input.o: input.c input.h
-	$(CC) -o input.o -c input.c $(CFLAGS)
+%.o: %.c $(DEPS)
+	$(CC) $(CFLAGS) -c -o '$@' '$<'
 
-console: ldahid.o input.o control.o
-	$(CC) -o attenuator_lab_brick  ldahid.o input.o control.o $(CFLAGS)
+.PHONY: attenuator
+attenuator_lab_brick: attenuator_lab_brick
 
+.PHONY: all
+all: attenuator
+
+.PHONY: install
+install:
+	$(INSTALL_BIN) -- attenuator_lab_brick.7 $(MANDIR)
+	$(INSTALL_DIR) -- '$(DEST_DIR)$(PREFIX)/bin'
+	$(INSTALL_BIN) -- attenuator_lab_brick '$(DESTDIR)$(PREFIX)/bin/'
+	$(ZIP) $(MANDIR)attenuator_lab_brick.7
+
+.PHONY: uninstall
+uninstall:
+	$(RM) -- '$(DESTDIR)$(PREFIX)/bin/attenuator_lab_brick'
+	$(RM) -- '$(MANDIR)attenuator_lab_brick.7.gz'
+
+.PHONY: clean
 clean:
-	rm -rf control.o
-	rm -rf input.o
-	rm -rf ldahid.o
-
-clean_up:
-	rm -rf attenuator_lab_brick
+	$(RM) -- input.o control.o LDAhid.o attenuator_lab_brick
