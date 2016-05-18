@@ -127,7 +127,6 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 	quiet = check_quiet(argc, argv);
 
 	for (i = 1; i < argc; i++) {
-		printf(WARN "argv[%d]: %s\n",i, argv[i]);
 		if (strncmp(argv[i], "-a", strlen(argv[i])) == 0) {
 			ud->simple = 1;
 			if ((i + 1) < argc)
