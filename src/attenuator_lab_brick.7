@@ -1,30 +1,129 @@
 .TH attenuator_lab_brick 7 "17.05.2016" "version 1.0"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" disable hyphenation
+.nh
+.\" disable justification
+.ad l
 .SH NAME
-attenuator_lab_brick - a commandline tool for the vaunix digital attenuator
+attenuator_lab_brick \- a commandline tool for the vaunix digital attenuator
 .SH SYNOPSIS
-.B attenuator_lab_brick [-h] [-a <attenuation in dB>] [-t <time in>]
- [s|ms|us] [-ramp] [-triangle] [-start <attenuation in dB>] [-i]
- [-end <attenuation in dB>] [-f path/to/file>] [-l <path/to/file>] [-r]
- [-rr <number of reruns>] [-q] [-md <path/to/file1> <path/to/file2>...]
-.B
+.sp
+.nt
+\fIattenuator_lab_brick\fR [\-h] [\-a \<\fIattenuation in dB\fR\>] [\-t \<\fItime\fR\>]
+    [s|ms|us] [\-ramp|\-triangle] [\-start \<\fIattenuation in dB\fR\>]
+    [\-i] [\-end \<\fIattenuation in dB\fR\>] [\-f \<\fIpath/to/file\fR\>]
+    [\-l \<\fIpath/to/file\fR\>] [\-r] [\-rr \<\fInumber of reruns\fR\>] [\-q]
+    [\-md \<\fIpath/to/file1\fR\> \<\fIpath/to/file2\fR\> \fI\.\.\.\fR]
+.fi
+.sp
 .SH DESCRIPTION
 This is a commandline tool for the digital Lab Brick attenuator from Vaunix. It
-allows you to control multiple device and set attenuation individually for each
+allows you to control multiple device and set attenuation individually for each"
 attenuator.
 .SH OPTIONS
-.IP "-a <attenuation in dB>"
-	set attenuation to the given dB value
-.IP "-t <time>"
-.BR "keep the attenuation for a given amount of time
-time can be set in s|ms|us
-if no time unit is specified seconds will be used
-one time unit is used as standard"
-.IP "-ramp"
-	set attenuation in the form of a ramp
-.IP "-triangle"
-	set attenuation in the form of a triangle
+\-h
+.RS 4
+Prints a list of usable commands.
+.RE
+.PP
+\-a
+\<\fIattenuation in dB\fR\>
+.RS 4
+This Option allows sets the attenuation to the given dB value. The attenuation
+can be set in \&.25dB value. Even if the attenuator does not have a
+\fIresolution\fR of \&.25dB it will accept the value and set it internally to
+the next lower resolution step.
+.RE
+.PP
+\-end
+\<\fIattenuation in dB\fR\>
+.RS 4
+set attenuation end point for
+.I ramp
+or
+.I triangle
+form
+.RE
+.PP
+\-f
+\<\fI/path/to/file\fR\>
+.RS 4
+Use a .csv file to set attenaution values. The file should have the syntax
+.RS 4
+\<\fItime\fR\>,\<\fIattenuation in dB\fR\>
+.RE
+.sp
+To set an attenuation of 4\&.5dB for a time of 6 seconds followed by 3
+seconds at 10dB the lines would look like:
+.RS 4
+.sp
+6,4\&.5
+.sp
+3,10
+.RE
+.RE
+.PP
+\-i
+.RS 4
+This options prints additional information about connected attenuator devices.
+.RE
+.PP
+\-q
+.RS 4
+This option disables the [INFO] output. [ERROR] and [WARN} will be shown.
+.RE
+.PP
+\-r
+.BS 4
+If this option is enabled the program will repeat the command until cnaceled
+by the user.
+.RE
+.PP
+\-ramp
+.RS 4
+Set attenuation in form of a ramp using \fI\-start\fR and \fI\-end\fR to specify
+the maximal and minimal attenuation. This option excludes \fI\-triangle\fR.
+.RE
+.PP
+\-start
+\<\fIattenuation in dB\fR\>
+.RS 4
+This option sets the attenuation start point for \fI\-ramp\fR or \fI\-traingle\fR
+.RE
+.PP
+\-t 
+\<\fItime\fR\> \<\fItime unit\fR\>
+.RS 4
+keep the attenuation for a given amount of time
+in s|ms|us.
+.sp
+If nothing is specified one second is the standard time and unit set.
+If only the time is set, seconds will be used as time unit.
+.RE
+.PP
+\-triangle
+.RS 4
+Set attenuation in the form of a triangle using \fI\-start\fR and \fI\-end\fR
+to specify the maximal and minimal attenuation. This option excludes \fI\-ramp\fR.
+.RE
+.PP
 .SH BUGS
 Multi device support is currently not tested. If you find any bugs please report
-them to stefan.venz@protonmail.com or open an issue on https://github.com/ikstream/Labbrick_Digital_Attenuator
+them to
+.sp
+.RS
+.BI " stefan.venz@protonmail.com "
+.RE
+.sp
+or open an issue on github
+.sp
+.RS
+.BI  " https://github.com/thuehn/Labbrick_Digital_Attenuator "
+.RE
 .SH AUTHOR
-Stefan Venz (ikstream) ,stefan.venz@protonmail.com>
+Stefan Venz (ikstream) <stefan.venz@protonmail.com>
+.SH CONTRIBUTOR(S)
+Benjamin Vahl <benjamin.vahl@googlemail.com>
+.sp
+Thomas Huehn <thomas@net.t-labs.tu-berlin.de>
