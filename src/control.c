@@ -164,30 +164,8 @@ call_help(void)
 	printf("\t-a <attenuation in dB>\n");
 	printf("\r\n");
 
-	printf("-set time for attenuation duration with\n");
-	printf("\t-t <time in sec>\n");
-	printf("\r\n");
-
-	printf("\tyou can use s, ms or us to set time units\n");
-	printf("\t\ts -> seconds\n");
-	printf("\t\tms -> milliseconds\n");
-	printf("\t\tus -> microseconds\n");
-	printf("\r\n");
-
-	printf("-set attenuation form with\n");
-	printf("\t-ramp|-triangle\n");
-	printf("\r\n");
-
-	printf("-set starting attenuation strength in dB with\n");
-	printf("\t-start <dB>\n");
-	printf("\r\n");
-
 	printf("-set end attenuation strength in dB with\n");
 	printf("\t-end <dB>\n");
-	printf("\r\n");
-
-	printf("-set size of steps for attenuation in dB with\n");
-	printf("\t-step <dB>\n");
 	printf("\r\n");
 
 	printf("-to use a .csv file\n");
@@ -195,24 +173,12 @@ call_help(void)
 	printf("\tcsv file is expected to have time;attenuation format\n");
 	printf("\r\n");
 
-	printf("-log attenuation changes to a .csv file\n");
-	printf("\t-l path/to/logfile\n");
-	printf("\r\n");
-
-	printf("-repeat form, or file input until canceled by user\n");
-	printf("\t-r\n");
-	printf("\r\n");
-
 	printf("print additional device information\n");
 	printf("\t-i\n");
 	printf("\r\n");
 
-	printf("-remove [INFO] output\n");
-	printf("\t-q\n");
-	printf("\r\n");
-
-	printf("-repeat form, or file input for several times\n");
-	printf("\t-rr <#runs>\n");
+	printf("-log attenuation changes to a .csv file\n");
+	printf("\t-l path/to/logfile\n");
 	printf("\r\n");
 
 	printf("-to use more than one connected attenuator use\n");
@@ -221,6 +187,40 @@ call_help(void)
 	printf("\t every connected and detected attenuator will be used\n");
 	printf("\t if there are more config files than attenuators detected\n");
 	printf("\t the remaining files will be discarded\n");
+	printf("\r\n");
+
+	printf("-remove [INFO] output\n");
+	printf("\t-q\n");
+	printf("\r\n");
+
+	printf("-repeat form, or file input until canceled by user\n");
+	printf("\t-r\n");
+	printf("\r\n");
+
+	printf("-set attenuation form with\n");
+	printf("\t-ramp|-triangle\n");
+	printf("\r\n");
+
+	printf("-repeat form, or file input for several times\n");
+	printf("\t-rr <#runs>\n");
+	printf("\r\n");
+
+	printf("-set starting attenuation strength in dB with\n");
+	printf("\t-start <dB>\n");
+	printf("\r\n");
+
+	printf("-set size of steps for attenuation in dB with\n");
+	printf("\t-step <dB>\n");
+	printf("\r\n");
+
+	printf("-set time for attenuation duration with\n");
+	printf("\t-t <time in sec>\n");
+	printf("\r\n");
+
+	printf("\tyou can use s, ms or us to set time units\n");
+	printf("\t\ts -> seconds\n");
+	printf("\t\tms -> milliseconds\n");
+	printf("\t\tus -> microseconds\n");
 	printf("\r\n");
 
 	return;
