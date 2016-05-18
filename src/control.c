@@ -168,7 +168,7 @@ call_help(void)
 	printf("\t-t <time in sec>\n");
 	printf("\r\n");
 
-	printf("\tyou can use s, ms and us to set time units\n");
+	printf("\tyou can use s, ms or us to set time units\n");
 	printf("\t\ts -> seconds\n");
 	printf("\t\tms -> milliseconds\n");
 	printf("\t\tus -> microseconds\n");
