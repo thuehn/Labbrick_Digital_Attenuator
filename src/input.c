@@ -52,7 +52,7 @@ read_file(char *path, int id,struct user_data *ud)
 	fp = fopen(path, "r");
 
 	if (fp == NULL) {
-                printf("unable to open input file for reading: %s\n", path);
+                printf(ERR "unable to open input file for reading: %s\n", path);
 		return 1;
 	}
 
@@ -97,7 +97,7 @@ log_attenuation(unsigned int att, struct user_data *ud)
 
         fp = fopen(ud->logfile, "a");
         if (fp == NULL) {
-                printf("unable to open logfile for writing: %s\n", ud->logfile);
+                printf(ERR "unable to open logfile for writing: %s\n", ud->logfile);
                 return 2;
         }
 
@@ -122,7 +122,9 @@ log_attenuation(unsigned int att, struct user_data *ud)
 int
 get_parameters(int argc, char *argv[], struct user_data *ud)
 {
-	int i;
+	int i, quiet;
+
+	quiet = check_quiet(argc, argv);
 
 	for (i = 1; i < argc; i++) {
 		if (strncmp(argv[i], "-a", strlen(argv[i])) == 0) {
@@ -130,108 +132,87 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 			if ((i + 1) < argc)
 				ud->attenuation = (int)(atof(argv[i + 1]) * 4);
 			else {
-				printf("you set the -a switch, but missed to enter an attenuation\n");
+				printf(ERR "you set the -a switch, but missed to enter an attenuation\n");
 				return 0;
 			}
-		}
-
-		else if (strncmp(argv[i], "-i", strlen(argv[i])) == 0)
+		} else if (strncmp(argv[i], "-i", strlen(argv[i])) == 0) {
 			ud->info = 1;
-
-		else if (strncmp(argv[i], "-t", strlen(argv[i])) == 0)
+		} else if (strncmp(argv[i], "-t", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc)
 				ud->atime = atol(argv[i + 1]);
 			else {
-				printf("You missed to set a time\n");
+				printf(ERR "You missed to set a time\n");
 				return 0;
 			}
-
-		else if (strncmp(argv[i], "-step", strlen(argv[i])) == 0)
+		} else if (strncmp(argv[i], "-step", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc)
 				ud->ramp_steps = (int)(atof(argv[i + 1]) * 4);
 			else {
-				printf("no attenuation steps set\n");
-				printf("Step size will be set to device minimum\n");
+				printf(WARN "no attenuation steps set\n");
+				printf(WARN "Step size will be set to device minimum\n");
 				//TODO: set steps du resolution if none is set
 			}
-
-		else if (strncmp(argv[i], "-start", strlen(argv[i])) == 0)
+		} else if (strncmp(argv[i], "-start", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc)
 				ud->start_att = (int)(atof(argv[i + 1]) * 4);
 			else {
-				printf("no start attenuation set\n");
+				printf(ERR "no start attenuation set\n");
 				return 0;
 			}
-
-
-		else if (strncmp(argv[i], "-end", strlen(argv[i])) == 0)
+		} else if (strncmp(argv[i], "-end", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc)
 				ud->end_att = (int)(atof(argv[i + 1]) * 4);
 			else {
-				printf("no end attenuation set\n");
+				printf(ERR "no end attenuation set\n");
 				return 0;
 			}
-
-		else if (strncmp(argv[i],"-f", strlen(argv[i])) == 0) {
+		} else if (strncmp(argv[i],"-f", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc) {
 				strncpy(ud->path, argv[i + 1], MAX_LENGTH - 1);
 				ud->path[MAX_LENGTH - 1] = '\0';
 				ud->file = 1;
 			}
 			else {
-				printf("no file specified\n");
+				printf(ERR "no file specified\n");
 				return 0;
 			}
-		}
-
+		} else if (strncmp(argv[i], "-q", strlen(argv[i])) == 0) {
+			ud->quiet = 1;
 		/* set time unit us/ms/s */
-		else if (strncmp(argv[i],"s", strlen(argv[i])) == 0) {
+		} else if (strncmp(argv[i],"s", strlen(argv[i])) == 0) {
 				ud->ms = 0;
 				ud->us = 0;
-				printf("time in seconds\n");
-		}
-
-		else if (strncmp(argv[i],"ms", strlen(argv[i])) == 0) {
+				if (!quiet)
+					printf(INFO "time in seconds\n");
+		} else if (strncmp(argv[i],"ms", strlen(argv[i])) == 0) {
 			ud->ms = 1;
-			printf("time in milliseconds\n");
-		}
-
-		else if (strncmp(argv[i],"us", strlen(argv[i])) == 0) {
+			if (!quiet)
+				printf(INFO "time in milliseconds\n");
+		} else if (strncmp(argv[i],"us", strlen(argv[i])) == 0) {
 			ud->us = 1;
-			printf("time in useconds\n");
-		}
-		else if (strncmp(argv[i], "-l", strlen(argv[i])) == 0) {
+			if (!quiet)
+				printf(INFO "time in useconds\n");
+		} else if (strncmp(argv[i], "-l", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc) {
 				strncpy(ud->logfile, argv[i + 1], MAX_LENGTH - 1);
 				ud->logfile[MAX_LENGTH - 1] = '\0';
 				ud->log = 1;
-				printf("logging to file: %s\n", ud->logfile);
+				if (!quiet)
+					printf(INFO "logging to file: %s\n", ud->logfile);
 			} else {
-				printf("please specify a logfile filename\n");
+				printf(ERR "please specify a logfile filename\n");
 				return 0;
 			}
-		}
-
-		else if(strncmp(argv[i], "-p", strlen(argv[i])) == 0) {
-			if (strncmp(argv[i + 1], "-ramp",
-			    strlen(argv[i + 1])) == 0)
+		} else if (strncmp(argv[i], "-ramp\0", strlen(argv[i]) + 1) == 0) {
 				ud->ramp = 1;
-			else if (strncmp(argv[i + 1], "-sine",
-			    strlen(argv[i + 1])) == 0)
-				ud->sine = 1;
-			else if (strncmp(argv[i + 1],"-triangle",
-			    strlen(argv[i + 1])) == 0)
+		} else if (strncmp(argv[i],"-triangle", strlen(argv[i])) == 0) {
 				ud->triangle = 1;
-		}
-
-		else if (strncmp(argv[i], "-r", strlen(argv[i])) == 0) {
+		}else if (strncmp(argv[i], "-r\0", strlen(argv[i]) + 1) == 0) {
 			ud->cont = 1;
-		}
-
-		else if (strncmp(argv[i], "-rr", strlen(argv[i])) == 0) {
-			if ((i + 1) < argc)
+		} else if (strncmp(argv[i], "-rr", strlen(argv[i])) == 0) {
+			if ((i + 1) < argc) {
 				ud->runs = atoi(argv[i+1]);
-			else {
+			} else {
 				ud->runs = 1;
 			}
 		}
@@ -246,14 +227,13 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 void
 clear_userdata(struct user_data *ud)
 {
-	ud->atime = SLEEP_TIME;
+	ud->atime = 1;
 	ud->us = 0;
 	ud->ms = 0;
 	ud->attenuation = 0;
 	ud->start_att = 0;
 	ud->end_att = 0;
 	ud->ramp = 0;
-	ud->sine = 0;
 	ud->triangle = 0;
 	ud->ramp_steps = 1;
 	ud->cont = 0;
@@ -262,6 +242,7 @@ clear_userdata(struct user_data *ud)
 	ud->info = 0;
 	ud->runs = 1;
 	ud->log = 0;
+	ud->quiet=0;
 	memset(ud->path, '\0', sizeof(ud->path));
 	memset(ud->logfile, '\0', sizeof(ud->logfile));
 }

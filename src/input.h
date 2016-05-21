@@ -12,7 +12,6 @@ struct user_data
 	unsigned int start_att;
 	unsigned int end_att;
 	unsigned int ramp;
-	unsigned int sine;
 	unsigned int triangle;
 	unsigned int ramp_steps;
 	unsigned int cont;
@@ -23,6 +22,7 @@ struct user_data
 	unsigned int ms;
 	unsigned int us;
 	unsigned int log;
+	unsigned int quiet;
 	char path[128];
 	char logfile[128];
 };

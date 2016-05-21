@@ -41,7 +41,7 @@ get_serial_and_name(int device_count, char *device_name)
 	unsigned int serial;
 
 	for (id = 1; id <= device_count; id++) {
-		printf("Device %d has Modelname: ", id);
+		printf(INFO "Device %d has Modelname: ", id);
 		fnLDA_GetModelName(id, device_name);
 		serial = fnLDA_GetSerialNumber(id);
 		printf("%s with serial number %d\n", device_name, serial);
@@ -75,11 +75,11 @@ susleep(unsigned long usec)
 void
 print_dev_info(int id)
 {
-	printf("You can set attenuation steps in %.2fdB steps\n",
+	printf(INFO "You can set attenuation steps in %.2fdB steps\n",
 		(double)(fnLDA_GetDevResolution(SINGLE_DEV_ID)) / 4);
-	printf("min attenuation: %.2fdB\n",
+	printf(INFO "min attenuation: %.2fdB\n",
 		(double)fnLDA_GetMinAttenuation(id) / 4);
-	printf("max attenuation: %.2fdB\n",
+	printf(INFO "max attenuation: %.2fdB\n",
 		(double)fnLDA_GetMaxAttenuation(id) / 4);
 }
 
@@ -164,47 +164,21 @@ call_help(void)
 	printf("\t-a <attenuation in dB>\n");
 	printf("\r\n");
 
-	printf("-set time for attenuation duration with\n");
-	printf("\t-t <time in sec>\n");
-	printf("\r\n");
-
-	printf("\tyou can use s, ms and us to set time units\n");
-	printf("\t\ts -> seconds\n");
-	printf("\t\tms -> milliseconds\n");
-	printf("\t\tus -> microseconds\n");
-	printf("\r\n");
-
-	printf("-set attenuation form with\n");
-	printf("\t-p <-ramp|-triangle>\n");
-	printf("\r\n");
-
-	printf("-set starting attenuation strength in dB with\n");
-	printf("\t-start <dB>\n");
-	printf("\r\n");
-
 	printf("-set end attenuation strength in dB with\n");
 	printf("\t-end <dB>\n");
 	printf("\r\n");
 
-	printf("-set size of steps for attenuation in dB with\n");
-	printf("\t-step <dB>\n");
-	printf("\r\n");
-
 	printf("-to use a .csv file\n");
 	printf("\t-f path/to/file\n");
-	printf("csv file is expected to have time;attenuation format\n");
+	printf("\tcsv file is expected to have time;attenuation format\n");
+	printf("\r\n");
+
+	printf("print additional device information\n");
+	printf("\t-i\n");
 	printf("\r\n");
 
 	printf("-log attenuation changes to a .csv file\n");
 	printf("\t-l path/to/logfile\n");
-	printf("\r\n");
-
-	printf("-repeat form, or file input until canceled by user\n");
-	printf("\t-r\n");
-	printf("\r\n");
-
-	printf("-repeat form, or file input for several times\n");
-	printf("\t-rr <#runs>\n");
 	printf("\r\n");
 
 	printf("-to use more than one connected attenuator use\n");
@@ -213,6 +187,40 @@ call_help(void)
 	printf("\t every connected and detected attenuator will be used\n");
 	printf("\t if there are more config files than attenuators detected\n");
 	printf("\t the remaining files will be discarded\n");
+	printf("\r\n");
+
+	printf("-remove [INFO] output\n");
+	printf("\t-q\n");
+	printf("\r\n");
+
+	printf("-repeat form, or file input until canceled by user\n");
+	printf("\t-r\n");
+	printf("\r\n");
+
+	printf("-set attenuation form with\n");
+	printf("\t-ramp|-triangle\n");
+	printf("\r\n");
+
+	printf("-repeat form, or file input for several times\n");
+	printf("\t-rr <#runs>\n");
+	printf("\r\n");
+
+	printf("-set starting attenuation strength in dB with\n");
+	printf("\t-start <dB>\n");
+	printf("\r\n");
+
+	printf("-set size of steps for attenuation in dB with\n");
+	printf("\t-step <dB>\n");
+	printf("\r\n");
+
+	printf("-set time for attenuation duration with\n");
+	printf("\t-t <time in sec>\n");
+	printf("\r\n");
+
+	printf("\tyou can use s, ms or us to set time units\n");
+	printf("\t\ts -> seconds\n");
+	printf("\t\tms -> milliseconds\n");
+	printf("\t\tus -> microseconds\n");
 	printf("\r\n");
 
 	return;
@@ -231,69 +239,87 @@ check_att_limits(int id, struct user_data *ud, int check)
 	/* check for simple case */
 	if (check == 0) {
 		if (ud->attenuation < fnLDA_GetMinAttenuation(id)) {
-			printf("%.2f is below minimal attenuation of %.2f\n",
+			printf(WARN "%.2f is below minimal attenuation of %.2f\n",
 				(double)ud->attenuation / 4,
 				(double)fnLDA_GetMinAttenuation(id) / 4);
-			printf("attenuation has been set to %.2fdB\n",
+			printf(WARN "attenuation has been set to %.2fdB\n",
 				(double)fnLDA_GetMinAttenuation(id) / 4);
 			fnLDA_SetAttenuation(id, fnLDA_GetMinAttenuation(id));
 			log_attenuation(fnLDA_GetMinAttenuation(id), ud);
 		} else if (ud->attenuation > fnLDA_GetMaxAttenuation(id)) {
-			printf("%.2f is above maximal attenuation of %.2f\n",
+			printf(WARN "%.2f is above maximal attenuation of %.2f\n",
 				(double)ud->attenuation / 4,
 				(double)fnLDA_GetMaxAttenuation(id) / 4);
-			printf("attenuation has been set to %.2f\n",
+			printf(WARN "attenuation has been set to %.2f\n",
 				(double)fnLDA_GetMaxAttenuation(id) / 4);
 			fnLDA_SetAttenuation(id, fnLDA_GetMaxAttenuation(id));
 			log_attenuation(fnLDA_GetMaxAttenuation(id), ud);
 		} else {
 			fnLDA_SetAttenuation(id, (ud->attenuation));
 			log_attenuation(ud->attenuation, ud);
-			printf("set device to %.2fdB attenuation\n",
-				(double)(fnLDA_GetAttenuation(id)) / 4);
+			if (!ud->quiet)
+				printf(INFO "set device to %.2fdB attenuation\n",
+					(double)(fnLDA_GetAttenuation(id)) / 4);
 		}
 	}
 
 	/* check for start and end attenuation */
 	if (check == 1) {
 		if (ud->start_att < fnLDA_GetMinAttenuation(id)) {
-			printf("%.2f is below minimal attenuation of %.2f\n",
+			printf(WARN "%.2f is below minimal attenuation of %.2f\n",
 				(double)ud->start_att / 4,
 				(double)fnLDA_GetMinAttenuation(id) / 4);
-			printf("start attenuation has been set to %.2fdB\n",
-				(double)fnLDA_GetMinAttenuation(id));
+			printf(WARN "start attenuation has been set to %.2fdB\n",
+				(double)fnLDA_GetMinAttenuation(id) / 4);
 			ud->start_att = fnLDA_GetMinAttenuation(id);
 		}
 		if (ud->start_att > fnLDA_GetMaxAttenuation(id)) {
-			printf("%.2f is above maximal attenuation of %.2f\n",
+			printf(WARN "%.2f is above maximal attenuation of %.2f\n",
 				(double)ud->start_att / 4, 
 				(double)fnLDA_GetMaxAttenuation(id) / 4);
-			printf("start attenuation has been set to %.2f\n",
+			printf(WARN "start attenuation has been set to %.2f\n",
 				(double)fnLDA_GetMaxAttenuation(id) / 4);
 			ud->start_att = fnLDA_GetMaxAttenuation(id);
 		}
 		if (ud->end_att < fnLDA_GetMinAttenuation(id)) {
-			printf("%.2f is below minumal attenuation of %.2f\n",
+			printf(WARN "%.2f is below minumal attenuation of %.2f\n",
 				(double)ud->end_att / 4,
 				(double)fnLDA_GetMinAttenuation(id) / 4);
-			printf("final attenuation has been set to %.2fdB\n",
+			printf(WARN "final attenuation has been set to %.2fdB\n",
 				(double)fnLDA_GetMinAttenuation(id) / 4);
 			ud->end_att = fnLDA_GetMinAttenuation(id);
 		}
 		if (ud->end_att > fnLDA_GetMaxAttenuation(id)) {
-			printf("%.2f is above maximal attenuation of %.2f\n",
-				(double)ud->end_att,
-				(double)fnLDA_GetMaxAttenuation(id));
-			printf("final attenuation has been set to %.2f\n",
-				(double)fnLDA_GetMinAttenuation(id) / 4);
+			printf(WARN "%.2f is above maximal attenuation of %.2f\n",
+				(double)ud->end_att / 4,
+				(double)fnLDA_GetMaxAttenuation(id) / 4);
+			printf(WARN "final attenuation has been set to %.2f\n",
+				(double)fnLDA_GetMaxAttenuation(id) / 4);
 			ud->end_att = fnLDA_GetMaxAttenuation(id);
 		}
 	}
 }
 
+void
+check_stepsize(struct user_data *ud, int id)
+{
+	if (ud->ramp_steps > fnLDA_GetMaxAttenuation(id))
+		ud->ramp_steps = fnLDA_GetMaxAttenuation(id);
+
+	if (ud->start_att < ud->end_att) {
+		if (ud->ramp_steps > (ud->end_att - ud->start_att)) 
+			ud->ramp_steps = ud->end_att - ud->start_att;
+	} else {
+		if (ud->ramp_steps > (ud->start_att - ud->end_att))
+			ud->ramp_steps = ud->start_att - ud->end_att;
+	}
+	printf(WARN "step size was to large. reduced to %d\n",ud->ramp_steps / 4);
+}
+
 /*
  * calculate number of steps for triangle and ramp function
  * @param ud: user data struct
+ * @return: returns number of steps to get from low to high
  */
 int
 calc_nr_steps(struct user_data *ud)
@@ -313,7 +339,7 @@ attenuation_time(struct user_data *ud)
 {
 	if (ud->us == 1)
 		susleep(TIME_MICROS(ud->atime));
-	else if(ud->ms == 1)
+	else if (ud->ms == 1)
 		susleep(TIME_MILLIS(ud->atime));
 	else
 		susleep(TIME_SECONDS(ud->atime));
@@ -324,17 +350,19 @@ attenuation_time(struct user_data *ud)
  * attenuation stepwise up or down to get a ramp like form
  * @param id: device id
  * @param ud: user data struct
+ * @return: returns 1 on error else 0
  */
 int
 set_ramp(int id, struct user_data *ud)
 {
 	int i, cur_att, nr_steps;
 	check_att_limits(id, ud, RAMP);
-
+	
+	check_stepsize(ud, id);
 	nr_steps = calc_nr_steps(ud);
 	
 	if (!nr_steps) {
-		printf("start and end attenuation are equal\n");
+		printf(ERR "start and end attenuation are equal\n");
 		return 1;
 	}
 
@@ -347,12 +375,14 @@ set_ramp(int id, struct user_data *ud)
 				cur_att = fnLDA_GetAttenuation(id);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
-				printf("attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
 			}
 			cur_att = fnLDA_GetAttenuation(id);
-			printf("attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
 		}
 	}
 	if (ud->cont && (ud->start_att > ud->end_att)) {
@@ -364,12 +394,15 @@ set_ramp(int id, struct user_data *ud)
 				cur_att = fnLDA_GetAttenuation(id);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
-				printf("attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
 			}
 			cur_att = fnLDA_GetAttenuation(id);
-			printf("attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 		}
 	}
 	if (ud->start_att < ud->end_att) {
@@ -380,8 +413,9 @@ set_ramp(int id, struct user_data *ud)
 			cur_att = fnLDA_GetAttenuation(id);
 			fnLDA_SetAttenuation(id,
 				cur_att + ud->ramp_steps);
-			printf("attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
 	}
@@ -393,14 +427,17 @@ set_ramp(int id, struct user_data *ud)
 			cur_att = fnLDA_GetAttenuation(id);
 			fnLDA_SetAttenuation(id,
 				cur_att - ud->ramp_steps);
-			printf("attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
 	}
 	attenuation_time(ud);
 	cur_att = fnLDA_GetAttenuation(id);
-	printf("attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+	if (!ud->quiet)
+		printf(INFO "attenuation set to %.2fdB\n",
+			((double)cur_att) / 4);
 
 	return 0;
 }
@@ -426,6 +463,7 @@ set_attenuation(int id, struct user_data *ud)
  * log it.
  * @param id: device id
  * @param ud: user data struct
+ * @return: returns 1 on error else 0
  */
 int
 set_triangle(int id, struct user_data *ud)
@@ -433,10 +471,11 @@ set_triangle(int id, struct user_data *ud)
 	int i, cur_att, nr_steps;
 	check_att_limits(id, ud, TRIANGLE);
 
+	check_stepsize(ud, id);
 	nr_steps = calc_nr_steps(ud);
 
 	if (!nr_steps) {
-		printf("start and end attenuation are equal\n");
+		printf(ERR "start and end attenuation are equal\n");
 		return 1;
 	}
 
@@ -447,8 +486,9 @@ set_triangle(int id, struct user_data *ud)
 			for (i = 0; i < nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
-				printf("attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
@@ -456,8 +496,9 @@ set_triangle(int id, struct user_data *ud)
 			for (i = 1; i <= nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
-				printf("attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
@@ -470,16 +511,18 @@ set_triangle(int id, struct user_data *ud)
 		for (i = 0; i < nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
-			printf("attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
-		for (i = 1; i < nr_steps; i++) {
+		for (i = 1; i <= nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
-			printf("attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			fnLDA_SetAttenuation(id, cur_att - ud->ramp_steps);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
@@ -491,8 +534,9 @@ set_triangle(int id, struct user_data *ud)
 			for (i = 0; i < nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
-				printf("attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
@@ -500,8 +544,9 @@ set_triangle(int id, struct user_data *ud)
 			for (i = 1; i <= nr_steps; i++) {
 				attenuation_time(ud);
 				cur_att = fnLDA_GetAttenuation(id);
-				printf("attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+				if (!ud->quiet)
+					printf(INFO "attenuation set to %.2fdB\n",
+						((double)cur_att) / 4);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
@@ -514,16 +559,18 @@ set_triangle(int id, struct user_data *ud)
 		for (i = 0; i < nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
-			printf("attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			fnLDA_SetAttenuation(id, cur_att - ud->ramp_steps);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
 		for (i = 1; i <= nr_steps; i++) {
 			attenuation_time(ud);
 			cur_att = fnLDA_GetAttenuation(id);
-			printf("attenuation set to %.2fdB\n",
-				((double)cur_att) / 4);
+			if (!ud->quiet)
+				printf(INFO "attenuation set to %.2fdB\n",
+					((double)cur_att) / 4);
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
@@ -532,7 +579,8 @@ set_triangle(int id, struct user_data *ud)
 	}
 	attenuation_time(ud);
 	cur_att = fnLDA_GetAttenuation(id);
-	printf("attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+	if (!ud->quiet)
+		printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
 	return 0;
 }
 
@@ -546,7 +594,7 @@ allocate_user_data(void)
 	struct user_data *ud = malloc(sizeof(struct user_data));
 
 	if (ud == NULL) {
-		printf("could not allocate memory for user data\n");
+		printf(ERR "could not allocate memory for user data\n");
 		exit(1);
 	}
 	return ud;
@@ -560,7 +608,6 @@ void
 set_data(struct user_data *ud)
 {
 	int i, res = 0;
-
 	if (ud->simple == 1) {
 		set_attenuation(SINGLE_DEV_ID, ud);
 	} else if (ud->triangle && ud->cont) {
@@ -639,20 +686,53 @@ start_device(void *arguments)
  * @param working_devices: array of active devices
  */
 void
-close_device(int nr_active_devices, DEVID *working_devices)
+close_device(int nr_active_devices, DEVID *working_devices, int quiet)
 {
 	int id, status = 0;
 
 	for (id = 1; id <= nr_active_devices; id++) {
 		status = fnLDA_CloseDevice(working_devices[id - 1]);
 		if (status != 0) {
-			printf("shutting down device %d failed\n",
+			printf(ERR "shutting down device %d failed\n",
 				id);
-			printf("%d\n", nr_active_devices);
 		}
 		else
-			printf("shut down of device %d was successful\n", id);
+			if (!quiet)
+				printf(INFO "shut down of device %d "
+					"was successful\n", id);
 	}
+}
+
+/*
+ * check if quiet flag is enabled
+ * @param argc: argument count
+ * @param argv: array of function arguments
+ * @return returns 1 if -q is set else 0
+ */
+int
+check_quiet(int argc, char *argv[])
+{
+	int i = 0;
+	for (;i < argc; i++)
+		if (strncmp(argv[i], "-q", strlen(argv[i])) == 0)
+			return 1;
+	return 0;
+}
+
+/*
+ * check if info flag is enabled
+ * @param argc: argument count
+ * @param argv: array of function arguments
+ * @return returns 1 if -i is set else 0
+ */
+int
+check_info(int argc, char *argv[])
+{
+	int i = 0;
+	for (;i < argc; i++)
+		if (strncmp(argv[i], "-i", strlen(argv[i])) == 0)
+			return 1;
+	return 0;
 }
 
 /*
@@ -666,7 +746,7 @@ handle_multi_dev(int argc, char *argv[])
 	struct thread_arguments args;
 	pthread_t threads[MAXDEVICES];
 	int device_count = 0;
-	int id, nr_active_devices, file_count, ret, state;
+	int id, nr_active_devices, file_count, ret, state, quiet, info;
 	DEVID working_devices[MAXDEVICES];
 	char message[64];
 	char device_name[MAX_MODELNAME];
@@ -674,16 +754,25 @@ handle_multi_dev(int argc, char *argv[])
 
 	device_count = fnLDA_GetNumDevices();
 
-	if (device_count == 0)
-		printf("There is no attenuator connected\n");
-	else if (device_count > 1)
-		printf("There are %d attenuators connected\n", device_count);
-	else
-		printf("There is %d attenuator connected\n", device_count);
+	quiet = check_quiet(argc, argv);
+	info = check_info(argc, argv);
 
-	get_serial_and_name(device_count, device_name);
+	if (device_count == 0) {
+		printf(ERR "There is no attenuator connected\n");
+	} else if (device_count > 1) {
+		if (!quiet)
+			printf(INFO "There are %d attenuators connected\n", device_count);
+	} else {
+		if (!quiet)
+			printf(INFO "There is %d attenuator connected\n", device_count);
+	}
+
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
-	printf("%d active devices found\n", nr_active_devices);
+	if (!quiet) {
+		get_serial_and_name(device_count, device_name);
+
+		printf(INFO "%d active devices found\n", nr_active_devices);
+	}
 
 	/*
 	 * initiate devices
@@ -691,11 +780,16 @@ handle_multi_dev(int argc, char *argv[])
 	for (id = 0; id < nr_active_devices; id++) {
 		state = fnLDA_InitDevice(working_devices[id]);
 		if (state != 0) {
-			printf("initialising device %d failed\n",
+			printf(ERR "initialising device %d failed\n",
 				id);
 			continue;
 		}
-		printf("initialized device %d successfully\n", id);
+		
+		if (!quiet)
+			printf(INFO "initialized device %d successfully\n", id);
+
+		if (info)
+			print_dev_info(id);
 	}
 
 	/*
@@ -706,8 +800,8 @@ handle_multi_dev(int argc, char *argv[])
 			sizeof(message));
 		if (!strncmp(message,"Successfully checked device\n",
 		    strlen(message)) == 0) {
-			printf("check failed for device %d\n", id);
-			printf("%s\n", message);
+			printf(ERR "check failed for device %d\n", id);
+			printf(ERR "%s\n", message);
 		}
 	}
 
@@ -725,17 +819,17 @@ handle_multi_dev(int argc, char *argv[])
 		    (void *)&args);
 
 		if (ret)
-			printf("Failed to create thread! Error Code: %d\n",ret);
+			printf(ERR "Failed to create thread! Error Code: %d\n",ret);
 	}
 
 	for (id = 0; id < file_count; id++) {
 		ret = pthread_join(threads[id], &status);
 
 		if (ret)
-			printf("Failed to join thread! Error Code: %d\n", ret);
+			printf(ERR "Failed to join thread! Error Code: %d\n", ret);
 	}
 	
-	close_device(nr_active_devices, working_devices);
+	close_device(nr_active_devices, working_devices, 1);
 	return;
 }
 
@@ -752,22 +846,29 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 {
 	int status;
 	char message[64];
+	char *version;
 
 	clear_userdata(ud);
 
 	if (!get_parameters(argc, argv, ud)){
-		printf("Usage: %s [options]\n", argv[0]);
+		printf(WARN "Usage: %s [options]\n", argv[0]);
 		call_help();
 		exit(1);
+	}
+	
+	if (!ud->quiet) {
+		version = fnLDA_LibVersion();
+		printf(INFO "you are using libversion %s\n", version);
 	}
 
 	status = fnLDA_InitDevice(working_devices[SINGLE_DEV]);
 	if (status != 0) {
-		printf("initialising device 1 failed\n");
+		printf(ERR "initialising device 1 failed\n");
 		return 0;
 	}
 	else
-		printf("initialized device %d successfully\n", SINGLE_DEV_ID);
+		if (!ud->quiet)
+			printf(INFO "initialized device %d successfully\n", SINGLE_DEV_ID);
 
 	if (ud->info)
 		print_dev_info(SINGLE_DEV_ID);
@@ -776,15 +877,16 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 		sizeof(message));
 	if (strncmp(message,"Successfully checked device\n",
 	    strlen(message)) == 0) {
-		printf("%s",message);
+		if (!ud->quiet)
+			printf(INFO "%s",message);
 	} else {
-		printf("check failed for the device\n");
-		printf("%s\n", message);
+		printf(ERR "check failed for the device\n");
+		printf(ERR "%s\n", message);
 		return 0;
 	}
 
 	set_data(ud);
-	close_device(SINGLE_DEV_ID, working_devices);
+	close_device(SINGLE_DEV_ID, working_devices, ud->quiet);
 	return 1;
 }
 
@@ -795,26 +897,24 @@ int
 main(int argc, char *argv[])
 {
 	int device_count = 0;
-	int id, nr_active_devices;
+	int id, nr_active_devices, quiet;
 	DEVID working_devices[MAXDEVICES];
 	char device_name[MAX_MODELNAME];
-	char *version;
 
 	/* get the uid of caller */
 	uid_t uid = geteuid();
 	fnLDA_Init();
-	version = fnLDA_LibVersion();
-	printf("you are using libversion %s\n", version);
 
 	fnLDA_SetTestMode(FALSE);
+	quiet = check_quiet(argc, argv);
 
 	if (uid != 0) {
-		printf("This tool needs to be run as root to access USB ports\n");
+		printf(ERR "This tool needs to be run as root to access USB ports\n");
 		printf("Please run again as root\n");
 		exit(1);
 	}
 	if (argc < 2) {
-		printf("Usage: %s [options]\n", argv[0]);
+		printf(ERR "Usage: %s [options]\n", argv[0]);
 		call_help();
 		exit(1);
 	}
@@ -823,7 +923,8 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 	if (check_multi_device(argv)){
-		printf("multidevice support enabled\n");
+		if (!quiet)
+			printf(INFO "multidevice support enabled\n");
 		handle_multi_dev(argc, argv);
 		exit(0);
 	}
@@ -831,16 +932,22 @@ main(int argc, char *argv[])
 	struct user_data *ud = allocate_user_data();
 	device_count = fnLDA_GetNumDevices();
 
-	if (device_count == 0)
-		printf("There is no attenuator connected\n");
-	else if (device_count > 1)
-		printf("There are %d attenuators connected\n", device_count);
-	else
-		printf("There is %d attenuator connected\n", device_count);
+	if (device_count == 0) {
+		printf(ERR "There is no attenuator connected\n");
+	} else if (device_count > 1) {
+		if (!quiet)
+			printf(INFO "There are %d attenuators connected\n", device_count);
+	} else {
+		if (!quiet)
+			printf(INFO "There is %d attenuator connected\n", device_count);
+	}
 
-	get_serial_and_name(device_count, device_name);
+	if (!quiet)
+		get_serial_and_name(device_count, device_name);
+
 	nr_active_devices = fnLDA_GetDevInfo(working_devices);
-	printf("%d active devices found\n", nr_active_devices);
+	if (!quiet)
+		printf(INFO "%d active device(s) found\n", nr_active_devices);
 
 	handle_single_dev(ud, argc, argv, working_devices);
 	free(ud);

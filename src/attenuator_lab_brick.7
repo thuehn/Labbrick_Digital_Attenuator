@@ -1,0 +1,233 @@
+.TH attenuator_lab_brick 7 "17.05.2016" "version 1.0"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" disable hyphenation
+.nh
+.\" disable justification
+.ad l
+.SH NAME
+attenuator_lab_brick \- a commandline tool for the vaunix digital attenuator
+.SH SYNOPSIS
+.sp
+.nt
+\fIattenuator_lab_brick\fR [\-h] [\-a \<\fIattenuation in dB\fR\>] 
+    [\-end \<\fIattenuation in dB\fR\>] [\-f \<\fIpath/to/file\fR\>] [\-i]
+    [\-l \<\fIpath/to/file\fR\>]
+    [\-md \<\fIpath/to/file1\fR\> \<\fIpath/to/file2\fR\> \fI\.\.\.\fR]
+    [\-q] [\-r] [\-ramp|\-triangle] [\-rr \<\fInumber of reruns\fR\>]
+    [\-start \<\fIattenuation in dB\fR\>] [\-step \<\fIattenuation in dB\fR\>]
+    [\-t \<\fItime\fR\>] [s|ms|us]
+.fi
+.sp
+.SH DESCRIPTION
+.sp
+This is a commandline tool for the digital Lab Brick attenuator from Vaunix\&. It
+allows you to control multiple device and set attenuation individually for each"
+attenuator\&.
+.SH OPTIONS
+.PP
+\-h
+.RS 4
+Prints a list of usable commands\&.
+.RE
+.PP
+\-a
+\<\fIattenuation in dB\fR\>
+.RS 4
+This Option allows sets the attenuation to the given dB value\&.
+.sp
+The attenuation
+can be set in \&.25dB value\&. Even if the attenuator does not have a
+\fIresolution\fR of \&.25dB it will accept the value and set it internally to
+the next lower resolution step\&.
+.sp
+If the chosen attenuation is above the maximal attenuation supported
+a warning will be prompted and the attenuation will be set to
+the highest possible value\&.
+.sp
+If the chosen attenuation is below the minimal attenuation the attenuation
+will be set to the lowest possible value\&.
+.RE
+.PP
+\-end
+\<\fIattenuation in dB\fR\>
+.RS 4
+Set attenuation end point for \fIramp\fR or \fItriangle\fR form\&.
+.sp
+The attenuation
+can be set in \&.25dB value\&. Even if the attenuator does not have a
+\fIresolution\fR of \&.25dB it will accept the value and set it internally to
+the next lower resolution step\&.
+.sp
+If the chosen attenuation is above the maximal attenuation supported
+a warning will be prompted and the attenuation will be set to
+the highest possible value\&.
+.sp
+If the chosen attenuation is below the minimal attenuation the attenuation
+will be set to the lowest possible value\&.
+.RE
+.PP
+\-f
+\<\fI/path/to/file\fR\>
+.RS 4
+Use a \&.csv file to set attenaution values\&. The file should have the syntax
+.RS 4
+\<\fItime\fR\>,\<\fIattenuation in dB\fR\>
+.RE
+.sp
+To set an attenuation of 4\&.5dB for a time of 6 seconds followed by 3
+seconds at 10dB the lines would look like:
+.RS 4
+.sp
+6,4\&.5
+.sp
+3,10
+.RE
+.sp
+The attenuation
+can be set in \&.25dB value\&. Even if the attenuator does not have a
+\fIresolution\fR of \&.25dB it will accept the value and set it internally to
+the next lower resolution step\&.
+.sp
+If the chosen attenuation is above the maximal attenuation supported
+a warning will be prompted and the attenuation will be set to
+the highest possible value\&.
+.sp
+If the chosen attenuation is below the minimal attenuation the attenuation
+will be set to the lowest possible value\&.
+.RE
+.PP
+\-i
+.RS 4
+This options prints additional information about connected attenuator devices\&.
+.RE
+.PP
+\-l
+\<\fI/path/to/file\fR\>
+.RS 4
+Log attenuation steps with time stamp to a file\&.
+.RE
+.PP
+\-md
+\<\fI/path/to/file1\fR\> \<\fI/path/to/file2\fR\>
+.RS 4
+This option enables multiple devices with (different) files to be used\&.
+It will try to match each given file to an attenuator\&. If there are more
+files then attenuator detected the first \fIn\fR files will be used, where
+\fIn\fR is the number of attenuators detected\&.
+.sp
+If there are more attenuators detected, than files provided the program will
+only use as many attenuators as files are given\&.
+.sp
+The attenuation
+can be set in \&.25dB value\&. Even if the attenuator does not have a
+\fIresolution\fR of \&.25dB it will accept the value and set it internally to
+the next lower resolution step\&.
+.sp
+If the chosen attenuation is above the maximal attenuation supported
+a warning will be prompted and the attenuation will be set to
+the highest possible value\&.
+.sp
+If the chosen attenuation is below the minimal attenuation the attenuation
+will be set to the lowest possible value\&.
+.RE
+.PP
+\-q
+.RS 4
+This option disables the [INFO] output. [ERROR] and [WARN] will be shown\&.
+.RE
+.PP
+\-r
+.BS 4
+If this option is enabled the program will repeat the command until cnaceled
+by the user\&.
+.RE
+.PP
+\-rr
+\<\fInumber of reruns\fR\>
+.RS 4
+If this option is enabled the program will repeat its command for a number
+of times\&.
+.RE
+.PP
+\-ramp
+.RS 4
+Set attenuation in form of a ramp using \fI\-start\fR and \fI\-end\fR to specify
+the maximal and minimal attenuation\&. This option excludes \fI\-triangle\fR\&.
+.RE
+.PP
+\-start
+\<\fIattenuation in dB\fR\>
+.RS 4
+This option sets the attenuation start point for \fI\-ramp\fR or \fI\-traingle\fR
+.sp
+The attenuation
+can be set in \&.25dB value\&. Even if the attenuator does not have a
+\fIresolution\fR of \&.25dB it will accept the value and set it internally to
+the next lower resolution step\&.
+.sp
+If the chosen attenuation is above the maximal attenuation supported
+a warning will be prompted and the attenuation will be set to
+the highest possible value\&.
+.sp
+If the chosen attenuation is below the minimal attenuation the attenuation
+will be set to the lowest possible value\&.
+.RE
+.PP
+\-step
+\<\fIattenuation in dB\fR\>
+.RS 4
+This option defines the change in attenuation for the \fI\-ramp\fR and
+\fI\-trianlge\fR option\&. If no step size is defined \&.25dB will be used\&.
+.sp
+The attenuation
+can be set in \&.25dB value\&. Even if the attenuator does not have a
+\fIresolution\fR of \&.25dB it will accept the value and set it internally to
+the next lower resolution step\&.
+.sp
+If the chosen attenuation is above the maximal attenuation supported
+a warning will be prompted and the attenuation will be set to
+the highest possible value\&.
+.RE
+.PP
+\-t 
+\<\fItime\fR\> \<\fItime unit\fR\>
+.RS 4
+keep the attenuation for a given amount of time
+in s\|ms\|us\&.
+.sp
+If nothing is specified one second is the standard time and unit set\&.
+If only the time is set, seconds will be used as time unit\&.
+.RE
+.PP
+\-triangle
+.RS 4
+Set attenuation in the form of a triangle using \fI\-start\fR and \fI\-end\fR
+to specify the maximal and minimal attenuation\&. This option excludes
+\fI\-ramp\fR\&.
+.RE
+.PP
+.SH EXAMPLES
+.sp
+.SH BUGS
+.sp
+Multi device support is currently not tested\&. If you find any bugs please
+report them to\:
+.sp
+.RS
+.BI " stefan.venz@protonmail.com "
+.RE
+.sp
+or open an issue on github
+.sp
+.RS
+.BI  " https://github.com/thuehn/Labbrick_Digital_Attenuator "
+.RE
+.SH AUTHOR
+.sp
+Stefan Venz (ikstream) \<stefan\&.venz\@protonmail\&.com\>
+.SH CONTRIBUTOR(S)
+.sp
+Benjamin Vahl \<benjamin\&.vahl\@googlemail\&.com\>
+.sp
+Thomas Huehn \<thomas\@net\&.t\-labs\&.tu\-berlin\&.de\>
