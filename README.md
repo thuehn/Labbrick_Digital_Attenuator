@@ -25,16 +25,35 @@ A typical experimental setup, where the digital anttenuator is connecto to a Lap
 
 ## How to use our tool ?
 
-1. start our tool with  "sudo ./attenuator_lab_brick -h" to get a list of supported commands
+1. start our tool with  "sudo attenuator_lab_brick -h" to get a list of supported commands
 2. either you set the attenuation level directly or for more complex attenuation patters via a csv file
-3. You can get the attenuator frequency resolution with sudo ./attenuator_lab_brck -i. We do support 0.25dB steps
+3. You can get the attenuator frequency resolution with "sudo attenuator_lab_brck -i". We do support 0.25dB steps
+
+Additional information about each command can be found in the man page
 
 ## Example usage with a csv file
 
-The provided attenuation.csv file has the format: first row = step time (to be specified as seconds, milliseconds or microseconds), second row = attenuation in dB.
+The provided attenuation.csv file has the format: first row = step time (to be specified as seconds, milliseconds or microseconds in command execution), second row = attenuation in dB.
 To read the example attenuation.csv file continiously with milliseconds step time, you can use:
 ```
-sudo ./attenuator_lab_brick ms -r -f attenuation.csv -l att_log.txt > /dev/null
+"sudo attenuator_lab_brick ms -r -f attenuation.csv -l att_log.txt > /dev/null"
+```
+
+There is a min_max_att.csv in the src folder to set attenuation to 0 or 63 dB.two times.
+```
+"sudo attenuator_lab_brick s -q -f min_max_att.csv -l att_log.txt"
+```
+
+The 2_sided_ramp.csv generates an attenuation starting from 0dB increasing to 63dB in 1dB steps and vice versa
+```
+"sudo attenuator_lab_brick s -f 2_sided_ramp.csv"
+```
+
+## Example usage with a generated sawtooth signal
+
+To create a sawtooth signal starting at 0dB increasing in 2dB steps every 50 microseconds and repeat it 8 times, you can use:
+```
+"sudo attenuator_lab_brick -ramp -start 0 -end 60 -step 2 -t 50 us -rr 8"
 ```
 
 For more enhanced usage of our tool within your wireless experimentation look at the "run-experiment.sh" shell script as example.
