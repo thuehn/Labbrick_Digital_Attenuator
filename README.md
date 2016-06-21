@@ -39,12 +39,12 @@ To read the example attenuation.csv file continiously with milliseconds step tim
 "sudo attenuator_lab_brick ms -r -f attenuation.csv -l att_log.txt > /dev/null"
 ```
 
-There is a min_max_att.csv in the src folder to set attenuation to 0 or 63 dB.two times.
+There is a min_max_att.csv in the src folder to set attenuation to 0 followed by 63 dB two times.
 ```
 "sudo attenuator_lab_brick s -q -f min_max_att.csv -l att_log.txt"
 ```
 
-The 2_sided_ramp.csv generates an attenuation starting from 0dB increasing to 63dB in 1dB steps and vice versa
+The 2_sided_ramp.csv generates an attenuation starting from 0dB increasing to 63dB in 1dB steps and vice versa.
 ```
 "sudo attenuator_lab_brick s -f 2_sided_ramp.csv"
 ```
