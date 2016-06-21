@@ -32,14 +32,15 @@ A typical experimental setup, where the digital anttenuator is connecto to a Lap
 Additional information about each command can be found in the man page
 
 ## Example usage with a csv file
+For a better usage experience and understanding some .csv files are provided in the examples folder
+The provided files are in the format: first row = step time (to be specified as seconds, milliseconds or microseconds in command execution), second row = attenuation in dB.
 
-The provided attenuation.csv file has the format: first row = step time (to be specified as seconds, milliseconds or microseconds in command execution), second row = attenuation in dB.
-To read the example attenuation.csv file continiously with milliseconds step time, you can use:
+To read the attenuation.csv file continiously with milliseconds step time, you can use:
 ```
 "sudo attenuator_lab_brick ms -r -f attenuation.csv -l att_log.txt > /dev/null"
 ```
 
-There is a min_max_att.csv in the src folder to set attenuation to 0 followed by 63 dB two times.
+The min_max_att.csv in the examples folder will set attenuation to 0dB followed by 63dB two times.
 ```
 "sudo attenuator_lab_brick s -q -f min_max_att.csv -l att_log.txt"
 ```
@@ -51,9 +52,8 @@ The 2_sided_ramp.csv generates an attenuation starting from 0dB increasing to 63
 
 ## Example usage with a generated sawtooth signal
 
-To create a sawtooth signal starting at 0dB increasing in 2dB steps every 50 microseconds and repeat it 8 times, you can use:
+To create a sawtooth signal starting at 0dB increasing in 2dB steps every 50 microseconds and repeat it eight times, you can use:
 ```
 "sudo attenuator_lab_brick -ramp -start 0 -end 60 -step 2 -t 50 us -rr 8"
 ```
-
 For a more enhanced usage example of our tool within your wireless experiments look at the "run-experiment.sh" shell script.
