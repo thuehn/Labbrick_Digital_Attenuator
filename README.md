@@ -56,4 +56,4 @@ To create a sawtooth signal starting at 0dB increasing in 2dB steps every 50 mic
 "sudo attenuator_lab_brick -ramp -start 0 -end 60 -step 2 -t 50 us -rr 8"
 ```
 
-For more enhanced usage of our tool within your wireless experimentation look at the "run-experiment.sh" shell script as example.
+For a more enhanced usage example of our tool within your wireless experiments look at the "run-experiment.sh" shell script.
