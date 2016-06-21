@@ -32,7 +32,7 @@ A typical experimental setup, where the digital anttenuator is connecto to a Lap
 Additional information about each command can be found in the man page
 
 ## Example usage with a csv file
-For a better usage experience and understanding some .csv files are provided in the examples folder
+For a better user experience and understanding, some .csv files are provided in the examples folder.
 The provided files are in the format: first row = step time (to be specified as seconds, milliseconds or microseconds in command execution), second row = attenuation in dB.
 
 To read the attenuation.csv file continiously with milliseconds step time, you can use:
