@@ -688,18 +688,19 @@ start_device(void *arguments)
 void
 close_device(int nr_active_devices, DEVID *working_devices, int quiet)
 {
-	int id, status = 0;
+	int id, status, serial = 0;
 
 	for (id = 1; id <= nr_active_devices; id++) {
 		status = fnLDA_CloseDevice(working_devices[id - 1]);
+		serial = fnLDA_GetSerialNumber(working_devices[id - 1]);
 		if (status != 0) {
-			printf(ERR "shutting down device %d failed\n",
-				id);
+			printf(ERR "shutting down device %d (serial %i) failed\n",
+			       id, serial);
 		}
 		else
 			if (!quiet)
-				printf(INFO "shut down of device %d "
-					"was successful\n", id);
+				printf(INFO "shut down of device %d (serial %i) "
+				       "was successful\n", id, serial);
 	}
 }
 
@@ -746,8 +747,9 @@ handle_multi_dev(int argc, char *argv[])
 	struct thread_arguments args;
 	pthread_t threads[MAXDEVICES];
 	int device_count = 0;
-	int id, nr_active_devices, file_count, ret, state, quiet, info;
+	int i, nr_active_devices, file_count, ret, state, quiet, info, serial;
 	DEVID working_devices[MAXDEVICES];
+	DEVID id;
 	char message[64];
 	char device_name[MAX_MODELNAME];
 	void *status;
@@ -777,16 +779,20 @@ handle_multi_dev(int argc, char *argv[])
 	/*
 	 * initiate devices
 	 */
-	for (id = 0; id < nr_active_devices; id++) {
-		state = fnLDA_InitDevice(working_devices[id]);
+	for (i = 0; i < nr_active_devices; i++) {
+		id = working_devices[i];
+		state = fnLDA_InitDevice(id);
+		serial = fnLDA_GetSerialNumber(id);
+
 		if (state != 0) {
-			printf(ERR "initialising device %d failed\n",
-				id);
+			printf(ERR "initialising device %d (serial %i) failed\n",
+			       id, serial);
 			continue;
 		}
 		
 		if (!quiet)
-			printf(INFO "initialized device %d successfully\n", id);
+			printf(INFO "initialized device %d (serial %i) successfully\n",
+			       id, serial);
 
 		if (info)
 			print_dev_info(id);
@@ -795,12 +801,16 @@ handle_multi_dev(int argc, char *argv[])
 	/*
 	 * check devices
 	 */
-	for(id = 0; id < nr_active_devices; id++) {
-		strncpy(message, get_device_data(working_devices[id]),
+	for (i = 0; i < nr_active_devices; i++) {
+		id = working_devices[i];
+		serial = fnLDA_GetSerialNumber(id);
+
+		strncpy(message, get_device_data(id),
 			sizeof(message));
+
 		if (!strncmp(message,"Successfully checked device\n",
 		    strlen(message)) == 0) {
-			printf(ERR "check failed for device %d\n", id);
+			printf(ERR "check failed for device %d (serial %i)\n", id, serial);
 			printf(ERR "%s\n", message);
 		}
 	}
@@ -811,25 +821,25 @@ handle_multi_dev(int argc, char *argv[])
 	else
 		file_count = nr_active_devices;
 
-	for (id = 0; id < file_count; id++) {
-		args.path = argv[id + 2];
-		args.id = id + 1;
+	for (i = 0; i < file_count; i++) {
+		args.path = argv[i + 2];
+		args.id = i + 1;
 
-		ret = pthread_create(&threads[id], NULL, start_device,
+		ret = pthread_create(&threads[i], NULL, start_device,
 		    (void *)&args);
 
 		if (ret)
-			printf(ERR "Failed to create thread! Error Code: %d\n",ret);
+			printf(ERR "Failed to create thread! Error Code: %d\n", ret);
 	}
 
-	for (id = 0; id < file_count; id++) {
-		ret = pthread_join(threads[id], &status);
+	for (i = 0; i < file_count; i++) {
+		ret = pthread_join(threads[i], &status);
 
 		if (ret)
 			printf(ERR "Failed to join thread! Error Code: %d\n", ret);
 	}
-	
-	close_device(nr_active_devices, working_devices, 1);
+
+	close_device(nr_active_devices, working_devices, quiet);
 	return;
 }
 
