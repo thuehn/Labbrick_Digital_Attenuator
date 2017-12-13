@@ -5,6 +5,14 @@
 #define TIME_MILLIS(step_time) (step_time * 1000)
 #define TIME_SECONDS(step_time) (step_time * 1000000)
 #define MAX_LENGTH 128
+
+/* 
+ * Variable attenuation steps according to Vaunix LDA Linux SDK
+ * Attenuation setting in 0.25dB, so 4 steps = 1 dB
+ * Attenuation setting in 0.05dB, so 20 steps = 1 dB
+ * */
+#define MULTIPLIER_STEP 20
+
 struct user_data
 {
 	unsigned long atime;

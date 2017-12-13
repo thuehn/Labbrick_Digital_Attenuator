@@ -76,11 +76,11 @@ void
 print_dev_info(int id)
 {
 	printf(INFO "You can set attenuation steps in %.2fdB steps\n",
-		(double)(fnLDA_GetDevResolution(SINGLE_DEV_ID)) / 4);
+		(double)(fnLDA_GetDevResolution(SINGLE_DEV_ID)) / MULTIPLIER_STEP);
 	printf(INFO "min attenuation: %.2fdB\n",
-		(double)fnLDA_GetMinAttenuation(id) / 4);
+		(double)fnLDA_GetMinAttenuation(id) / MULTIPLIER_STEP);
 	printf(INFO "max attenuation: %.2fdB\n",
-		(double)fnLDA_GetMaxAttenuation(id) / 4);
+		(double)fnLDA_GetMaxAttenuation(id) / MULTIPLIER_STEP);
 }
 
 /*
@@ -240,18 +240,18 @@ check_att_limits(int id, struct user_data *ud, int check)
 	if (check == 0) {
 		if (ud->attenuation < fnLDA_GetMinAttenuation(id)) {
 			printf(WARN "%.2f is below minimal attenuation of %.2f\n",
-				(double)ud->attenuation / 4,
-				(double)fnLDA_GetMinAttenuation(id) / 4);
+				(double)ud->attenuation / MULTIPLIER_STEP,
+				(double)fnLDA_GetMinAttenuation(id) / MULTIPLIER_STEP);
 			printf(WARN "attenuation has been set to %.2fdB\n",
-				(double)fnLDA_GetMinAttenuation(id) / 4);
+				(double)fnLDA_GetMinAttenuation(id) / MULTIPLIER_STEP);
 			fnLDA_SetAttenuation(id, fnLDA_GetMinAttenuation(id));
 			log_attenuation(fnLDA_GetMinAttenuation(id), ud);
 		} else if (ud->attenuation > fnLDA_GetMaxAttenuation(id)) {
 			printf(WARN "%.2f is above maximal attenuation of %.2f\n",
-				(double)ud->attenuation / 4,
-				(double)fnLDA_GetMaxAttenuation(id) / 4);
+				(double)ud->attenuation / MULTIPLIER_STEP,
+				(double)fnLDA_GetMaxAttenuation(id) / MULTIPLIER_STEP);
 			printf(WARN "attenuation has been set to %.2f\n",
-				(double)fnLDA_GetMaxAttenuation(id) / 4);
+				(double)fnLDA_GetMaxAttenuation(id) / MULTIPLIER_STEP);
 			fnLDA_SetAttenuation(id, fnLDA_GetMaxAttenuation(id));
 			log_attenuation(fnLDA_GetMaxAttenuation(id), ud);
 		} else {
@@ -259,7 +259,7 @@ check_att_limits(int id, struct user_data *ud, int check)
 			log_attenuation(ud->attenuation, ud);
 			if (!ud->quiet)
 				printf(INFO "set device to %.2fdB attenuation\n",
-					(double)(fnLDA_GetAttenuation(id)) / 4);
+					(double)(fnLDA_GetAttenuation(id)) / MULTIPLIER_STEP);
 		}
 	}
 
@@ -267,34 +267,34 @@ check_att_limits(int id, struct user_data *ud, int check)
 	if (check == 1) {
 		if (ud->start_att < fnLDA_GetMinAttenuation(id)) {
 			printf(WARN "%.2f is below minimal attenuation of %.2f\n",
-				(double)ud->start_att / 4,
-				(double)fnLDA_GetMinAttenuation(id) / 4);
+				(double)ud->start_att / MULTIPLIER_STEP,
+				(double)fnLDA_GetMinAttenuation(id) / MULTIPLIER_STEP);
 			printf(WARN "start attenuation has been set to %.2fdB\n",
-				(double)fnLDA_GetMinAttenuation(id) / 4);
+				(double)fnLDA_GetMinAttenuation(id) / MULTIPLIER_STEP);
 			ud->start_att = fnLDA_GetMinAttenuation(id);
 		}
 		if (ud->start_att > fnLDA_GetMaxAttenuation(id)) {
 			printf(WARN "%.2f is above maximal attenuation of %.2f\n",
-				(double)ud->start_att / 4, 
-				(double)fnLDA_GetMaxAttenuation(id) / 4);
+				(double)ud->start_att / MULTIPLIER_STEP, 
+				(double)fnLDA_GetMaxAttenuation(id) / MULTIPLIER_STEP);
 			printf(WARN "start attenuation has been set to %.2f\n",
-				(double)fnLDA_GetMaxAttenuation(id) / 4);
+				(double)fnLDA_GetMaxAttenuation(id) / MULTIPLIER_STEP);
 			ud->start_att = fnLDA_GetMaxAttenuation(id);
 		}
 		if (ud->end_att < fnLDA_GetMinAttenuation(id)) {
 			printf(WARN "%.2f is below minumal attenuation of %.2f\n",
-				(double)ud->end_att / 4,
-				(double)fnLDA_GetMinAttenuation(id) / 4);
+				(double)ud->end_att / MULTIPLIER_STEP,
+				(double)fnLDA_GetMinAttenuation(id) / MULTIPLIER_STEP);
 			printf(WARN "final attenuation has been set to %.2fdB\n",
-				(double)fnLDA_GetMinAttenuation(id) / 4);
+				(double)fnLDA_GetMinAttenuation(id) / MULTIPLIER_STEP);
 			ud->end_att = fnLDA_GetMinAttenuation(id);
 		}
 		if (ud->end_att > fnLDA_GetMaxAttenuation(id)) {
 			printf(WARN "%.2f is above maximal attenuation of %.2f\n",
-				(double)ud->end_att / 4,
-				(double)fnLDA_GetMaxAttenuation(id) / 4);
+				(double)ud->end_att / MULTIPLIER_STEP,
+				(double)fnLDA_GetMaxAttenuation(id) / MULTIPLIER_STEP);
 			printf(WARN "final attenuation has been set to %.2f\n",
-				(double)fnLDA_GetMaxAttenuation(id) / 4);
+				(double)fnLDA_GetMaxAttenuation(id) / MULTIPLIER_STEP);
 			ud->end_att = fnLDA_GetMaxAttenuation(id);
 		}
 	}
@@ -313,7 +313,7 @@ check_stepsize(struct user_data *ud, int id)
 		if (ud->ramp_steps > (ud->start_att - ud->end_att))
 			ud->ramp_steps = ud->start_att - ud->end_att;
 	}
-	printf(WARN "step size was to large. reduced to %d\n",ud->ramp_steps / 4);
+	printf(WARN "step size was to large. reduced to %d\n",ud->ramp_steps / MULTIPLIER_STEP);
 }
 
 /*
@@ -377,12 +377,12 @@ set_ramp(int id, struct user_data *ud)
 					cur_att + ud->ramp_steps);
 				if (!ud->quiet)
 					printf(INFO "attenuation set to %.2fdB\n",
-						((double)cur_att) / 4);
+						((double)cur_att) / MULTIPLIER_STEP);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
 			}
 			cur_att = fnLDA_GetAttenuation(id);
 			if (!ud->quiet)
-				printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+				printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / MULTIPLIER_STEP);
 		}
 	}
 	if (ud->cont && (ud->start_att > ud->end_att)) {
@@ -396,13 +396,13 @@ set_ramp(int id, struct user_data *ud)
 					cur_att - ud->ramp_steps);
 				if (!ud->quiet)
 					printf(INFO "attenuation set to %.2fdB\n",
-						((double)cur_att) / 4);
+						((double)cur_att) / MULTIPLIER_STEP);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
 			}
 			cur_att = fnLDA_GetAttenuation(id);
 			if (!ud->quiet)
 				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+					((double)cur_att) / MULTIPLIER_STEP);
 		}
 	}
 	if (ud->start_att < ud->end_att) {
@@ -415,7 +415,7 @@ set_ramp(int id, struct user_data *ud)
 				cur_att + ud->ramp_steps);
 			if (!ud->quiet)
 				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+					((double)cur_att) / MULTIPLIER_STEP);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
 	}
@@ -429,7 +429,7 @@ set_ramp(int id, struct user_data *ud)
 				cur_att - ud->ramp_steps);
 			if (!ud->quiet)
 				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+					((double)cur_att) / MULTIPLIER_STEP);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
 	}
@@ -437,7 +437,7 @@ set_ramp(int id, struct user_data *ud)
 	cur_att = fnLDA_GetAttenuation(id);
 	if (!ud->quiet)
 		printf(INFO "attenuation set to %.2fdB\n",
-			((double)cur_att) / 4);
+			((double)cur_att) / MULTIPLIER_STEP);
 
 	return 0;
 }
@@ -488,7 +488,7 @@ set_triangle(int id, struct user_data *ud)
 				cur_att = fnLDA_GetAttenuation(id);
 				if (!ud->quiet)
 					printf(INFO "attenuation set to %.2fdB\n",
-						((double)cur_att) / 4);
+						((double)cur_att) / MULTIPLIER_STEP);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
@@ -498,7 +498,7 @@ set_triangle(int id, struct user_data *ud)
 				cur_att = fnLDA_GetAttenuation(id);
 				if (!ud->quiet)
 					printf(INFO "attenuation set to %.2fdB\n",
-						((double)cur_att) / 4);
+						((double)cur_att) / MULTIPLIER_STEP);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
@@ -513,7 +513,7 @@ set_triangle(int id, struct user_data *ud)
 			cur_att = fnLDA_GetAttenuation(id);
 			if (!ud->quiet)
 				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+					((double)cur_att) / MULTIPLIER_STEP);
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
@@ -522,7 +522,7 @@ set_triangle(int id, struct user_data *ud)
 			cur_att = fnLDA_GetAttenuation(id);
 			if (!ud->quiet)
 				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+					((double)cur_att) / MULTIPLIER_STEP);
 			fnLDA_SetAttenuation(id, cur_att - ud->ramp_steps);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
@@ -536,7 +536,7 @@ set_triangle(int id, struct user_data *ud)
 				cur_att = fnLDA_GetAttenuation(id);
 				if (!ud->quiet)
 					printf(INFO "attenuation set to %.2fdB\n",
-						((double)cur_att) / 4);
+						((double)cur_att) / MULTIPLIER_STEP);
 				fnLDA_SetAttenuation(id,
 					cur_att - ud->ramp_steps);
 				log_attenuation(cur_att - ud->ramp_steps, ud);
@@ -546,7 +546,7 @@ set_triangle(int id, struct user_data *ud)
 				cur_att = fnLDA_GetAttenuation(id);
 				if (!ud->quiet)
 					printf(INFO "attenuation set to %.2fdB\n",
-						((double)cur_att) / 4);
+						((double)cur_att) / MULTIPLIER_STEP);
 				fnLDA_SetAttenuation(id,
 					cur_att + ud->ramp_steps);
 				log_attenuation(cur_att + ud->ramp_steps, ud);
@@ -561,7 +561,7 @@ set_triangle(int id, struct user_data *ud)
 			cur_att = fnLDA_GetAttenuation(id);
 			if (!ud->quiet)
 				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+					((double)cur_att) / MULTIPLIER_STEP);
 			fnLDA_SetAttenuation(id, cur_att - ud->ramp_steps);
 			log_attenuation(cur_att - ud->ramp_steps, ud);
 		}
@@ -570,7 +570,7 @@ set_triangle(int id, struct user_data *ud)
 			cur_att = fnLDA_GetAttenuation(id);
 			if (!ud->quiet)
 				printf(INFO "attenuation set to %.2fdB\n",
-					((double)cur_att) / 4);
+					((double)cur_att) / MULTIPLIER_STEP);
 			fnLDA_SetAttenuation(id, cur_att + ud->ramp_steps);
 			log_attenuation(cur_att + ud->ramp_steps, ud);
 		}
@@ -580,7 +580,7 @@ set_triangle(int id, struct user_data *ud)
 	attenuation_time(ud);
 	cur_att = fnLDA_GetAttenuation(id);
 	if (!ud->quiet)
-		printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / 4);
+		printf(INFO "attenuation set to %.2fdB\n", ((double)cur_att) / MULTIPLIER_STEP);
 	return 0;
 }
 
