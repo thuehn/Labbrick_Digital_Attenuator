@@ -2,11 +2,14 @@
 #define _CONTROL_H_
 
 #include <stdio.h>
+#include <pthread.h>
 #include "input.h"
 
 #define ERR "\x1B[31m" "[ERROR]: " "\x1B[0m"
 #define WARN "\x1B[33m" "[WARNING]: " "\x1B[0m"
 #define INFO "\x1B[32m" "[INFO]: " "\x1B[0m"
+
+pthread_mutex_t device_mutex;
 
 char errmsg[64];
 
