@@ -60,7 +60,7 @@ read_file(char *path, int id,struct user_data *ud)
 		tmp = strdup(line);
 		ud->atime = atol(get_entry(tmp, TIME));
 		tmp = strdup(line);
-		ud->attenuation = (int)(atof(get_entry(tmp, ATT))* 4);
+		ud->attenuation = (int)(atof(get_entry(tmp, ATT))* MULTIPLIER_STEP);
 		set_attenuation(id, ud);
 		free(tmp);
 	}
@@ -101,7 +101,7 @@ log_attenuation(unsigned int att, struct user_data *ud)
                 return 2;
         }
 
-	double real_att = (double) att / 4;
+	double real_att = (double) att / MULTIPLIER_STEP;
         struct timespec ts;
         clock_gettime (CLOCK_REALTIME, &ts);
         fprintf (fp, "%u.%09u,", (unsigned int) ts.tv_sec, (unsigned int) ts.tv_nsec);
@@ -130,7 +130,7 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 		if (strncmp(argv[i], "-a", strlen(argv[i])) == 0) {
 			ud->simple = 1;
 			if ((i + 1) < argc)
-				ud->attenuation = (int)(atof(argv[i + 1]) * 4);
+				ud->attenuation = (int)(atof(argv[i + 1]) * MULTIPLIER_STEP);
 			else {
 				printf(ERR "you set the -a switch, but missed to enter an attenuation\n");
 				return 0;
@@ -146,7 +146,7 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 			}
 		} else if (strncmp(argv[i], "-step", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc)
-				ud->ramp_steps = (int)(atof(argv[i + 1]) * 4);
+				ud->ramp_steps = (int)(atof(argv[i + 1]) * MULTIPLIER_STEP);
 			else {
 				printf(WARN "no attenuation steps set\n");
 				printf(WARN "Step size will be set to device minimum\n");
@@ -154,14 +154,14 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 			}
 		} else if (strncmp(argv[i], "-start", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc)
-				ud->start_att = (int)(atof(argv[i + 1]) * 4);
+				ud->start_att = (int)(atof(argv[i + 1]) * MULTIPLIER_STEP);
 			else {
 				printf(ERR "no start attenuation set\n");
 				return 0;
 			}
 		} else if (strncmp(argv[i], "-end", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc)
-				ud->end_att = (int)(atof(argv[i + 1]) * 4);
+				ud->end_att = (int)(atof(argv[i + 1]) * MULTIPLIER_STEP);
 			else {
 				printf(ERR "no end attenuation set\n");
 				return 0;
