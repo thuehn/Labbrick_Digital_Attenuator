@@ -833,10 +833,10 @@ handle_multi_dev(int argc, char *argv[])
 		return;
 	}
 
-	for (id = 0; id < file_count; id++) {
+	for (i = 0; i < file_count; i++) {
 		pthread_mutex_lock(&device_mutex);
-		args.path = argv[id + 2];
-		args.id = id + 1;
+		args.path = argv[i + 2];
+		args.id = i + 1;
 
 		ret = pthread_create(&threads[i], NULL, start_device,
 		    (void *)&args);
