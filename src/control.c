@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include "control.h"
 #include "input.h"
 #include "LDAhid.h"
@@ -672,12 +671,20 @@ check_multi_device(char *argv[])
 void *
 start_device(void *arguments)
 {
+	char *path;
+	int id;
 	struct thread_arguments *args = arguments;
 	struct user_data *ud = allocate_user_data();
 	clear_userdata(ud);
-	read_file(args->path, args->id, ud);
+
+	path = args->path;
+	id = args->id;
+
+	pthread_mutex_unlock(&device_mutex);
+
+	read_file(path, id, ud);
 	free(ud);
-	pthread_exit((void *)args->id);
+	pthread_exit((void *)(intptr_t)args->id);
 }
 
 /*
@@ -821,7 +828,13 @@ handle_multi_dev(int argc, char *argv[])
 	else
 		file_count = nr_active_devices;
 
+	if (pthread_mutex_init(&device_mutex, NULL)) {
+		printf(ERR "Failed to initialize device mutex\n");
+		return;
+	}
+
 	for (i = 0; i < file_count; i++) {
+		pthread_mutex_lock(&device_mutex);
 		args.path = argv[i + 2];
 		args.id = i + 1;
 
