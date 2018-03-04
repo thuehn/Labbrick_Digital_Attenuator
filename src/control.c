@@ -34,7 +34,7 @@ struct thread_arguments {
  * @param device_name: storage location for device name
  */
 void
-get_serial_and_name(int device_count, char *device_name)
+get_serial_and_name(unsigned int device_count, char *device_name)
 {
 	DEVID id;
 	unsigned int serial;
@@ -91,7 +91,7 @@ char *
 get_device_data(unsigned int current_device)
 {
 	char *success = "Successfully checked device\n";
-	int status;
+	unsigned int status;
 
 	status = fnLDA_GetAttenuation(current_device);
 	if (status == INVALID_DEVID
@@ -606,7 +606,8 @@ allocate_user_data(void)
 void
 set_data(struct user_data *ud)
 {
-	int i, res = 0;
+	unsigned int i;
+	int res = 0;
 	if (ud->simple == 1) {
 		set_attenuation(SINGLE_DEV_ID, ud);
 	} else if (ud->triangle && ud->cont) {
@@ -753,7 +754,7 @@ handle_multi_dev(int argc, char *argv[])
 {
 	struct thread_arguments args;
 	pthread_t threads[MAXDEVICES];
-	int device_count = 0;
+	unsigned int device_count = 0;
 	int i, nr_active_devices, file_count, ret, state, quiet, info, serial;
 	DEVID working_devices[MAXDEVICES];
 	DEVID id;
@@ -920,7 +921,7 @@ int
 main(int argc, char *argv[])
 {
 	int device_count = 0;
-	int id, nr_active_devices, quiet;
+	int nr_active_devices, quiet;
 	DEVID working_devices[MAXDEVICES];
 	char device_name[MAX_MODELNAME];
 

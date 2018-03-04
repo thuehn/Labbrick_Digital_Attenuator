@@ -13,7 +13,7 @@ pthread_mutex_t device_mutex;
 
 char errmsg[64];
 
-void get_serial_and_name(int device_count, char *device_name);
+void get_serial_and_name(unsigned int device_count, char *device_name);
 char * get_device_data(unsigned int current_devices);
 int set_ramp(int id, struct user_data *ud);
 void set_attenuation(int id,struct user_data *ud);
