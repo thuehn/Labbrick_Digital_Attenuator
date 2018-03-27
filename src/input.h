@@ -16,12 +16,12 @@
 struct user_data
 {
 	unsigned long atime;
-	unsigned int attenuation;
-	unsigned int start_att;
-	unsigned int end_att;
+	int attenuation;
+	int start_att;
+	int end_att;
 	unsigned int ramp;
 	unsigned int triangle;
-	unsigned int ramp_steps;
+	int ramp_steps;
 	unsigned int cont;
 	unsigned int simple;
 	unsigned int file;
