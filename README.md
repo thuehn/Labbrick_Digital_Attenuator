@@ -57,3 +57,42 @@ To create a sawtooth signal starting at 0dB increasing in 2dB steps every 50 mic
 "sudo attenuator_lab_brick -ramp -start 0 -end 60 -step 2 -t 50 us -rr 8"
 ```
 For a more enhanced usage example of our tool within your wireless experiments look at the "run-experiment.sh" shell script.
+
+## More (specific) usage examples
+Set 40dB attenuation to single device (automatically detected) for 20 seconds
+
+"sudo attenuator_lab_brick s -a 40 -t 20"
+
+Set 40dB attenuation to specific device (detected by serial number) for 20 milliseconds
+
+"sudo attenuator_lab_brick ms -a 40 -t 20 -n 12655"
+
+Create a sawtooth signal starting at 0dB increasing in 2dB steps every 50 microseconds and repeat it 8 times
+
+"sudo attenuator_lab_brick -ramp -start 0 -end 60 -step 2 -t 50 us -rr 8 -n 12655"
+
+Set attenuation to specific device (detected by serial number) using csv file
+
+"sudo attenuator_lab_brick s -n 12655 -f test1.csv"
+
+Multi-device handling (automatically detected)
+"sudo attenuator_lab_brick -md test1.csv test2.csv test3.csv"
+
+Multi-device handling (detected by serial numbers)
+"sudo attenuator_lab_brick -mds 12655.csv 12656.csv 10314.csv"
+
+## Notes
+Calling application with -t 0 will not reset attenuation to 0
+
+For multi-device support, -md (or -mds) option should be used without any other options
+
+CSV file format:
+"step time (mandatory)","attenuation in dB (mandatory)","time unit [s|ms|us](optional)"
+e.g.:
+2,5
+2,5,ms
+
+Using -mds option, filename should be formatted in the following way:
+"serial number" + .csv
+e.g:
+12655.csv
