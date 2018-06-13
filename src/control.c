@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 #include "control.h"
 #include "input.h"
 #include "LDAhid.h"
@@ -714,6 +715,20 @@ close_device(int nr_active_devices, DEVID *working_devices, int quiet)
 }
 
 /*
+ * manage termination signal
+ * @param sig: signal type
+ */
+void sighandler(int sig)
+{
+	DEVID working_devices[MAXDEVICES];
+	int nr_active_devices;
+
+	nr_active_devices = fnLDA_GetDevInfo(working_devices);
+	close_devices(nr_active_devices, working_devices, 0);
+	exit(0);
+}
+
+/*
  * check if quiet flag is enabled
  * @param argc: argument count
  * @param argv: array of function arguments
@@ -938,15 +953,23 @@ main(int argc, char *argv[])
 		printf("Please run again as root\n");
 		exit(1);
 	}
+
 	if (argc < 2) {
 		printf(ERR "Usage: %s [options]\n", argv[0]);
 		call_help();
 		exit(1);
 	}
+
 	if ((strncmp(argv[1], "-h", strlen(argv[1]))) == 0) {
 		call_help();
 		exit(0);
 	}
+
+	/* Manage termination signal */
+	signal(SIGINT, sighandler);
+	signal(SIGTERM, sighandler);
+	signal(SIGABRT, sighandler);
+
 	if (check_multi_device(argv)){
 		if (!quiet)
 			printf(INFO "multidevice support enabled\n");
