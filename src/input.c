@@ -17,6 +17,7 @@
 #define LINE_LENGTH 256
 #define TIME 1
 #define ATT 2
+#define TIME_UNIT 3
 
 /*
  * returns token on given place in .csv file
@@ -34,6 +35,23 @@ get_entry(char* line, int entry)
 }
 
 /*
+ * set attenuation time if present in csv file
+ * @param time_unit: time unit flag
+ * @param ud: user data struct
+ */
+void
+set_time_unit(char *time_unit, struct user_data *ud)
+{
+	ud->ms = 0;
+	ud->us = 0;
+
+	if (strncmp(time_unit, "ms", strlen(time_unit)) == 0)
+		ud->ms = 1;
+	else if (strncmp(time_unit, "us", strlen(time_unit)) == 0)
+		ud->us = 1;
+}
+
+/*
  * open .csv file and checks it for correct entries.
  * time is expected to be in the first entry followed by the
  * attenuation.
@@ -43,10 +61,11 @@ get_entry(char* line, int entry)
  * @return: 0 on success, 1 if not possible to open file
  */
 int
-read_file(char *path, int id,struct user_data *ud)
+read_file(char *path, int id, struct user_data *ud)
 {
 	FILE *fp;
 	char *tmp;
+	char *time_unit;
 	char line[LINE_LENGTH];
 
 	fp = fopen(path, "r");
@@ -61,6 +80,10 @@ read_file(char *path, int id,struct user_data *ud)
 		ud->atime = atol(get_entry(tmp, TIME));
 		tmp = strdup(line);
 		ud->attenuation = (int)(atof(get_entry(tmp, ATT))* MULTIPLIER_STEP);
+		tmp = strdup(line);
+		time_unit = get_entry(tmp, TIME_UNIT);
+		if (time_unit)
+			set_time_unit(time_unit, ud);
 		set_attenuation(id, ud);
 		free(tmp);
 	}
