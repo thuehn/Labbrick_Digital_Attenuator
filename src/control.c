@@ -302,8 +302,10 @@ check_att_limits(int id, struct user_data *ud, int check)
 void
 check_stepsize(struct user_data *ud, int id)
 {
-	if (ud->ramp_steps > fnLDA_GetMaxAttenuation(id))
+	if (ud->ramp_steps > fnLDA_GetMaxAttenuation(id)) {
 		ud->ramp_steps = fnLDA_GetMaxAttenuation(id);
+		printf(WARN "step size was to large, reduced to MaxAttenuation size: %d\n", ud->ramp_steps);
+	}
 
 	if (ud->start_att < ud->end_att) {
 		if (ud->ramp_steps > (ud->end_att - ud->start_att)) 
@@ -312,7 +314,6 @@ check_stepsize(struct user_data *ud, int id)
 		if (ud->ramp_steps > (ud->start_att - ud->end_att))
 			ud->ramp_steps = ud->start_att - ud->end_att;
 	}
-	printf(WARN "step size was to large. reduced to %d\n",ud->ramp_steps / MULTIPLIER_STEP);
 }
 
 /*
