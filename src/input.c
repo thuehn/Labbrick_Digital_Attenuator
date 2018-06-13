@@ -230,7 +230,7 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 				ud->ramp = 1;
 		} else if (strncmp(argv[i],"-triangle", strlen(argv[i])) == 0) {
 				ud->triangle = 1;
-		}else if (strncmp(argv[i], "-r\0", strlen(argv[i]) + 1) == 0) {
+		} else if (strncmp(argv[i], "-r\0", strlen(argv[i]) + 1) == 0) {
 			ud->cont = 1;
 		} else if (strncmp(argv[i], "-rr", strlen(argv[i])) == 0) {
 			if ((i + 1) < argc) {
@@ -238,6 +238,14 @@ get_parameters(int argc, char *argv[], struct user_data *ud)
 			} else {
 				ud->runs = 1;
 			}
+		} else if (strncmp(argv[i], "-n", strlen(argv[i])) == 0) {
+			if ((i + 1) < argc)
+				ud->serial_number = atoi(argv[i + 1]);
+			else {
+				printf(ERR "You missed to insert serial number\n");
+				return 0;
+			}
+
 		}
 	}
 	return 1;

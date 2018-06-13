@@ -31,6 +31,7 @@ struct user_data
 	unsigned int us;
 	unsigned int log;
 	unsigned int quiet;
+	unsigned int serial_number;
 	char path[128];
 	char logfile[128];
 };
