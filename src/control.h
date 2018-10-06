@@ -13,7 +13,7 @@ pthread_mutex_t device_mutex;
 
 char errmsg[64];
 
-int get_id_by_serial(int serial, int device_count);
+int get_id_by_serial(int serial, unsigned int device_count);
 void get_serial_and_name(unsigned int device_count, char *device_name);
 char * get_device_data(unsigned int current_devices);
 int set_ramp(int id, struct user_data *ud);

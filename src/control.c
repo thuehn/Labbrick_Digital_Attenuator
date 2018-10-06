@@ -35,7 +35,7 @@ struct thread_arguments {
  * @param device_count: number of devices connected
  */
 int
-get_id_by_serial(int serial, int device_count)
+get_id_by_serial(int serial, unsigned int device_count)
 {
 	DEVID id;
 	int tmp_serial, serial_id;
@@ -875,7 +875,7 @@ handle_multi_dev(int argc, char *argv[], int file_serial_check)
 	char device_name[MAX_MODELNAME];
 	void *status;
 
-	device_count = fnLDA_GetNumDevices();
+	device_count = (unsigned int)fnLDA_GetNumDevices();
 
 	quiet = check_quiet(argc, argv);
 	info = check_info(argc, argv);
