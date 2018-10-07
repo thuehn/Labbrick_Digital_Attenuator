@@ -22,6 +22,8 @@
 #define SIMPLE 0
 #define SINGLE_DEV 0
 #define SINGLE_DEV_ID 1
+#define MAX_MSG_SIZE 64
+#define MAX_PATH_LENGTH 512
 
 /* pthread struct */
 struct thread_arguments {
@@ -868,10 +870,11 @@ handle_multi_dev(int argc, char *argv[], int file_serial_check)
 	struct thread_arguments args;
 	pthread_t threads[MAXDEVICES];
 	unsigned int device_count = 0;
+	int length;
 	int i, nr_active_devices, file_count, ret, state, quiet, info, serial;
 	DEVID working_devices[MAXDEVICES];
 	DEVID id;
-	char message[64];
+	char message[MAX_MSG_SIZE];
 	char device_name[MAX_MODELNAME];
 	void *status;
 
@@ -924,8 +927,7 @@ handle_multi_dev(int argc, char *argv[], int file_serial_check)
 		serial = fnLDA_GetSerialNumber(id);
 
 		strncpy(message, get_device_data(id),
-			sizeof(message));
-
+			MAX_MSG_SIZE - 1);
 		if (!strncmp(message,"Successfully checked device\n",
 		    strlen(message)) == 0) {
 			printf(ERR "check failed for device %d (serial %i)\n", id, serial);
@@ -951,8 +953,14 @@ handle_multi_dev(int argc, char *argv[], int file_serial_check)
 		if (file_serial_check) {
 			/* Get serial using filename */
 			int file_serial_int, tmp_id;
-			char *file_serial = malloc(sizeof(char) * (strlen(args.path) - 4));
-			strncpy(file_serial, args.path, strlen(args.path) - 4);
+			char *file_serial = malloc(sizeof(char) *
+						   MAX_PATH_LENGTH);
+			if ((strlen(args.path) - 4) >= MAX_PATH_LENGTH) {
+				length = MAX_PATH_LENGTH;
+			} else {
+				length = strlen(args.path) - 4;
+			}
+			strncpy(file_serial, args.path, length);
 			file_serial_int = atoi(file_serial);
 			tmp_id = get_id_by_serial(file_serial_int, device_count);
 			free(file_serial);
@@ -1038,7 +1046,7 @@ handle_single_dev(struct user_data *ud, int argc, char *argv[], DEVID *working_d
 		print_dev_info(id);
 
 	strncpy(message, get_device_data(working_devices[id - 1]),
-		sizeof(message));
+		MAX_MSG_SIZE - 1);
 	if (strncmp(message,"Successfully checked device\n",
 	    strlen(message)) == 0) {
 		if (!ud->quiet)
