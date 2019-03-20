@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+
+################################################################################
+#
+#    wifi-monitor
+#    This is part of the con-test framework
+#
+#    Copyright (C) 2019  Stefan Venz
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License along
+#    with this program; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+################################################################################
+
+source ./commons
+
+LOG_PATH="con-test_logs"
+SUDO=''
+
+# 0 -> certificate, 1 -> password; set in check_dependencies
+S_AUTH=1
+C_AUTH=1
+
+# set interface to monitor mode to collect traffic with tcpdump
+#
+# Aguments:
+# interface - interface to use for monitor mode
+#
+set_interface_to_monitor()
+{
+	interface=$1
+	ret=$SUCCESS
+
+	$SUDO ifconfig $interface down
+	$SUDO ifconfig $interface mode Monitor
+	$SUDO ifconfig $interface up
+}
+
+check_monitor()
+{
+	interface=$1
+	if [[ "$(iw dev | awk "/${interface}/{nr[NR+5]}; NR in nr" | \
+			  awk '{print $2}')" == "monitor" ]]; then
+		ret=$SUCCESS
+	else
+		printf "${WARNING} $interface is not in monitor mode\n"
+		ret=$FAILURE
+	fi
+	return $ret
+}
+
+# start tcp dump on the client side
+#
+# Arguemnts:
+# interface - use this interface for tcpdump
+# file_name - name for log file
+#
+start_client_tcpdump()
+{
+	interface=$1
+	file_name=$2
+
+	if (( $C_AUTH == 1)); then
+		ret=$(nohup sshpass -p "$CLIENT_PASSWORD" \
+			     ssh ${CLIENT_USER}@${CLIENT_IP} \
+			     "tcpdump -w ${LOG_PATH}/$file_name -i $interface")
+		check_ret_val $? "something went wrong starting tcpdump on $CLIENT_IP"
+	else
+		ret=$(nohup ssh -i ${CLIENT_CERTIFICATE} \
+		      ${CLIENT_USER}@${CLIENT_IP} \
+		      "tcpdump -w ${LOG_PATH}/${file_name} -i $interface")
+	fi
+}
+
+# main function
+#
+# Arguments:
+# args - command line arguments
+main()
+{
+	args=$@
+	test_get_opt
+
+	options=c:hmo:t:V
+	loptions=config:,help,monitor,output:,time:,version
+	config_path="con-test.conf"
+
+	! parsed=$(getopt --options=$options --longoptions=$loptions --name "$0" -- $args)
+	if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+		exit $FAILURE
+	fi
+
+	eval set -- "$parsed"
+
+	while true; do
+		case "$1" in
+			-c | --config)
+				config_path=$2
+				shift 2
+				;;
+			-h | --help)
+				call_help
+				exit $SUCCESS
+				;;
+			-i | --interface)
+				interface=$2
+				shift 2
+				;;
+			-m | --monitor)
+				monitor=1
+				shift
+				;;
+			-o | --output)
+				LOG_PATH=$2
+				shift 2
+				;;
+			-t | --time)
+				TIME=$2
+				shift 2
+				;;
+			-V | --version)
+				print_version
+				exit $SUCCESS
+				;;
+			--)
+				shift
+				break
+				;;
+			*)
+				break
+				;;
+		esac
+	done
+
+	printf "${INFO} Starting wireless monitor\n"
+	printf "\t\tUsing config ${config_path}\n"
+	printf "\t\tUsing logpath ${LOG_PATH}\n"
+
+	if [ ! -f "${config_path}" ]; then
+		printf "${ERROR} ${config_path} does not exist or can not be accessed"
+		exit $FAILURE
+	fi
+	
+	source $config_path
+
+	check_dependecies
+
+	mkdir -p $LOG_PATH
+
+#	if [[ $monitor -eq 1 ]]; then
+#		printf "${INFO} setting $interface to monitor mode"
+#		ret=eet_interface_to_monitor $interface
+#		check_ret_val $ret "Failed to set $interface to monitor mode"
+#	fi
+
+	printf "${INFO} starting monitoring $interface on $CLIENT_IP\n"
+	ret=start_tcpdump $interface
+	check_ret_val $ret "Failed to start tcpdump on $interface"
+}
+
+main $@
+
