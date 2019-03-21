@@ -41,7 +41,7 @@ test_get_opt()
 {
 	! getopt --test > /dev/null
 	if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
-	    return FAILURE
+	    return $FAILURE
 	fi
 }
 
