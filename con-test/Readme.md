@@ -18,6 +18,12 @@ password during the runs to get privileges.
 
 ` iperf3 `
 
+` nohup `
+
+` timeout `
+
+` tcpdump `
+
 ### Usage
 #### Command line options
 `-c/--config - set path for config file `
