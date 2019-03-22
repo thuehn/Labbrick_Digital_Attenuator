@@ -70,17 +70,22 @@ check_monitor()
 start_client_tcpdump()
 {
 	interface=$1
-	file_name=$2
+	file_name="client_$2"
+	time=$3
 
 	if (( $C_AUTH == 1)); then
 		ret=$(nohup sshpass -p "$CLIENT_PASSWORD" \
 			     ssh ${CLIENT_USER}@${CLIENT_IP} \
-			     "timeout $time tcpdump -w ${LOG_PATH}/$file_name -i $interface")
+			     "timeout $time tcpdump -w ${LOG_PATH}/$file_name -i $interface" \
+			     >> ${LOG_PATH}/${file_name} &)
 		check_ret_val $? "something went wrong starting tcpdump on $CLIENT_IP"
 	else
 		ret=$(nohup ssh -i ${CLIENT_CERTIFICATE} \
 		      ${CLIENT_USER}@${CLIENT_IP} \
-		      "timeout $time tcpdump -w ${LOG_PATH}/${file_name} -i $interface")
+		      "timeout $time tcpdump -w ${LOG_PATH}/${file_name} -i $interface" \
+		      >> ${LOG_PATH}/${file_name} &)
+		check_ret_val $? "something went wrong starting tcpdump on $CLIENT_IP"
+
 	fi
 }
 
@@ -94,18 +99,21 @@ start_client_tcpdump()
 start_server_tcpdump()
 {
 	interface=$1
-	file_name=$2
+	file_name="server_$2"
 	time=$3
 
 	if (( $C_AUTH == 1)); then
 		ret=$(nohup sshpass -p "$SERVER_PASSWORD" \
 			     ssh ${SERVER_USER}@${SERVER_IP} \
-			     "timeout $time tcpdump -w ${LOG_PATH}/$file_name -i $interface")
+			     "timeout $time tcpdump -w ${LOG_PATH}/$file_name -i $interface" \
+			     >> ${LOG_PATH}/${file_name} &)
 		check_ret_val $? "something went wrong starting tcpdump on $CLIENT_IP"
 	else
 		ret=$(nohup ssh -i ${SERVER_CERTIFICATE} \
 		      ${SERVER_USER}@${SERVER_IP} \
-		      "timeout $time tcpdump -w ${LOG_PATH}/${file_name} -i $interface")
+		      "timeout $time tcpdump -w ${LOG_PATH}/${file_name} -i $interface" \
+		      >> ${LOG_PATH}/${file_name} &)
+		check_ret_val $? "something went wrong starting tcpdump on $CLIENT_IP"
 	fi
 }
 
@@ -118,6 +126,7 @@ main()
 	args=$@
 	time=0
 	interface=''
+	file_name="con-test-tcpdump-$(date +%F-%H-%M-%S).log"
 
 	test_get_opt
 
@@ -149,10 +158,6 @@ main()
 			-i | --interface)
 				interface=$2
 				shift 2
-				;;
-			-m | --monitor)
-				monitor=1
-				shift
 				;;
 			-o | --output)
 				LOG_PATH=$2
@@ -195,12 +200,6 @@ main()
 	check_dependecies
 
 	mkdir -p $LOG_PATH
-
-#	if [[ $monitor -eq 1 ]]; then
-#		printf "${INFO} setting $interface to monitor mode"
-#		ret=eet_interface_to_monitor $interface
-#		check_ret_val $ret "Failed to set $interface to monitor mode"
-#	fi
 
 	check_monitor $interface
 
