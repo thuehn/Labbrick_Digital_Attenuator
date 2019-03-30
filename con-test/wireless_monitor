@@ -50,12 +50,17 @@ set_interface_to_monitor()
 check_monitor()
 {
 	interface=$1
-	if [[ "$(iw dev | awk "/${interface}/{nr[NR+5]}; NR in nr" | \
-			  awk '{print $2}')" == "monitor" ]]; then
-		ret=$SUCCESS
-	else
-		printf "${WARNING} $interface is not in monitor mode\n"
-		ret=$FAILURE
+	user=$2
+
+	if [[ "$user" == "c" ]]; then
+
+		if [[ "$(iw dev | awk "/${interface}/{nr[NR+5]}; NR in nr" | \
+			awk '{print $2}')" == "monitor" ]]; then
+			ret=$SUCCESS
+		else
+			printf "${WARNING} $interface is not in monitor mode\n"
+			ret=$FAILURE
+		fi
 	fi
 	return $ret
 }
@@ -74,6 +79,9 @@ start_client_tcpdump()
 	time=$3
 
 	if (( $C_AUTH == 1)); then
+		check_monitor $interface $CLIENT_PASSWORD $CLIENT_USER $CLIENT_IP
+		check_ret_val $? "Please set the interface to monitor mode"
+
 		ret=$(nohup sshpass -p "$CLIENT_PASSWORD" \
 			     ssh ${CLIENT_USER}@${CLIENT_IP} \
 			     "timeout $time tcpdump -w ${LOG_PATH}/$file_name -i $interface" \
@@ -194,7 +202,7 @@ main()
 		printf "${ERROR} ${config_path} does not exist or can not be accessed"
 		exit $FAILURE
 	fi
-	
+
 	source $config_path
 
 	check_dependecies
