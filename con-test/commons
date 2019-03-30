@@ -35,6 +35,9 @@ INFO="$(tput bold ; tput setaf 2) [INFO]:$(tput sgr0)"
 SUCCESS=0
 FAILURE=1
 
+CLIENT=0
+SERVER=1
+
 # Test if getopt works as expected
 #
 test_get_opt()
@@ -62,6 +65,44 @@ check_ret_val()
 	fi
 }
 
+# Check which authentication and side to use
+#
+# Arguments:
+# side - 0 for client, 1 for server
+#
+# returns:
+# 0 if certificate
+# 1 on password
+#
+check_auth()
+{
+	side=$1
+	if (( $side == $CLIENT )); then
+		ret=1
+		if [ -z $CLIENT_PASSWORD ]; then
+			if [ ! -f $CLIENT_CERTIFICATE ] ||
+			   [ -z $CLIENT_CERTIFICATE ];then
+				printf "No client password set, no certificate"
+				printf " provided/accessible.\n"
+				exit $FAILURE
+			fi
+			ret=0
+		fi
+	else
+		ret=1
+		if [ -z $SERVER_PASSWORD ]; then
+			if [ ! -f $SERVER_CERTIFICATE ] ||
+			   [ -z $SERVER_CERTIFICATE ]; then
+				printf "No server password set, no certificate"
+				printf " provided/accessible.\n"
+				exit $FAILURE
+			fi
+			ret=0
+		fi
+	fi
+	return $ret
+}
+
 # print version of con-test
 #
 print_version()
@@ -82,26 +123,6 @@ check_dependecies()
 			printf "Please provide client/server certificate, or"
 			printf " install sshpass and provide passwords\n"
 			exit $FAILURE
-		fi
-
-		if [ -z $SERVER_PASSWORD ]; then
-			if [ ! -f $SERVER_CERTIFICATE ] ||
-			   [ -z $SERVER_CERTIFICATE ]; then
-				printf "No server password set, no certificate"
-				printf " provided/accessible.\n"
-				exit $FAILURE
-			fi
-			S_AUTH=0
-		fi
-
-		if [ -z $CLIENT_PASSWORD ]; then
-			if [ ! -f $CLIENT_CERTIFICATE ] ||
-			   [ -z $CLIENT_CERTIFICATE ];then
-				printf "No client password set, no certificate"
-				printf " provided/accessible.\n"
-				exit $FAILURE
-			fi
-			C_AUTH=0
 		fi
 	fi
 

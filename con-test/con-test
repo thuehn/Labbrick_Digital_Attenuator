@@ -33,11 +33,6 @@ LOG_PATH="con-test_logs"
 
 SUDO=''
 
-# 0 -> certificate, 1 -> password; set in check_dependencies
-S_AUTH=1
-C_AUTH=1
-
-
 # check dependencies on wifi nodes
 #
 check_remote_deps()
@@ -51,102 +46,80 @@ check_remote_deps()
 #
 # Arguments:
 # run - number of current test, starting with 1
+# side - where to start iperf:  0 for client, 1 for server
 #
-start_iperf_server()
+start_iperf()
 {
 	run="$1"
-	log_name="con-test-server-run-${run}-$(date +%F-%H-%M-%S).log"
+	side=$2
 
-	param="-s"
-	if [ -n "${IPERF_PARAM_SERVER[${i} - 1]}" ]; then
-		param="${param} ${IPERF_PARAM_SERVER[${i} - 1]}"
+	auth=$(chack_auth $side)
+
+	# set parameter for client or server
+	if (( $side == $CLIENT )); then
+		log_name="con-test-client-run-${run}-$(date +%F-%H-%M-%S).log"
+		ip=$CLIENT_IP
+		user=$CLIENT_USER
+		param="-c"
+		if [ -n "${IPERF_PARAM_CLIENT[${run} - 1]}" ]; then
+			param="${IPERF_PARAM_CLIENT[${run} - 1]} $param"
+		fi
+
+		if (( $auth == 0 )); then
+			passwd=$CLIENT_PASSWORD
+		else
+			cert=$CLIENT_CERTIFICATE
+		fi
+
+	else
+		log_name="con-test-server-run-${run}-$(date +%F-%H-%M-%S).log"
+		ip=$SERVER_IP
+		user=$SERVER_USER
+		param="-s"
+		if [ -n "${IPERF_PARAM_SERVER[${run} - 1]}" ]; then
+			param="${param} ${IPERF_PARAM_SERVER[${run} - 1]}"
+		fi
+		if (( $auth == 0 )); then
+			passwd=$SERVER_PASSWORD
+		else
+			cert=$SERVER_CERTIFICATE
+		fi
 	fi
 
-	echo "Attenuation parameter: ${ATTENUATOR_PARAMS[${i} - 1]}" > \
+	echo "Attenuation parameter: ${ATTENUATOR_PARAMS[${run} - 1]}" > \
 							${LOG_PATH}/${log_name}
 	echo "Iperf parameter: ${param}" >> ${LOG_PATH}/${log_name}
 
-	if (( $S_AUTH == 1 )); then
-		iperf_pid=$(sshpass -p "$SERVER_PASSWORD" \
-			    ssh ${SERVER_USER}@${SERVER_IP} "ps" \
+	# use cert or password for authentication
+	if (( $auth == $CLIENT )); then
+		iperf_pid=$(sshpass -p "$passwd" \
+			    ssh ${user}@${ip} "ps" \
 			    | awk '/[i]perf/{ print $1 }')
 		if [ -n "$iperf_pid" ]; then
-			ret=$(sshpass -p "$SERVER_PASSWORD" \
-			      ssh ${SERVER_USER}@${SERVER_IP} \
+			ret=$(sshpass -p "$passwd" \
+			      ssh ${user}@${ip} \
 			      "kill -9 $iperf_pid")
 			check_ret_val "$?" "Could not kill iperf: $iperf_pid - $ret"
 		fi
 
-		ret=$(nohup sshpass -p "$SERVER_PASSWORD" \
-		      ssh ${SERVER_USER}@${SERVER_IP} \
+		ret=$(nohup sshpass -p "$passwd" \
+		      ssh ${user}@${ip} \
 		      "iperf3 $param" >> ${LOG_PATH}/${log_name} &)
-		check_ret_val $? "Failed to start iperf server on ${SERVER_IP}: $ret"
+		check_ret_val $? "Failed to start iperf with ${param} on ${ip}: $ret"
 	else
-		iperf_pid=$(ssh -i $SERVER_CERTIFICATE \
-			    ${SERVER_USER}@${SERVER_IP} "ps" \
+		iperf_pid=$(ssh -i $cert \
+			    ${user}@${ip} "ps" \
 			    | awk '/[i]perf/{ print $1 }')
 		if [ -n "$iperf_pid" ]; then
-			ret=$(ssh -i $SERVER_CERTIFICATE \
-			      ${SERVER_USER}@${SERVER_IP} "kill -9 $iperf_pid")
+			ret=$(ssh -i $cert \
+			      ${user}@${ip} "kill -9 $iperf_pid")
 			check_ret_val "$?" "Could not kill iperf: $iperf_pid - $ret"
 		fi
 
-		ret=$(ssh -i $SERVER_CERTIFICATE \
-		      ${SERVER_USER}@${SERVER_IP} \
+		ret=$(ssh -i $cert \
+		      ${user}@${ip} \
 		      "iperf3 $param" >> ${LOG_PATH}/${log_name} &)
-		check_ret_val $? "Failed to start iperf server on ${SERVER_IP}: $ret"
-	fi
-}
-
-# start iperf client
-#
-# Arguments:
-# run - number of current test, starting with 1
-#
-start_iperf_client()
-{
-	run=$1
-	log_name="con-test-client-run-${run}-$(date +%F-%H-%M-%S).log"
-
-	echo "Attenuation parameter: ${ATTENUATOR_PARAMS[${i} - 1]}" > \
-							${LOG_PATH}/${log_name}
-	param="-c"
-	if [ -n "${IPERF_PARAM_CLIENT[${i} - 1]}" ]; then
-		param="${IPERF_PARAM_CLIENT[${i} - 1]} $param"
-	fi
-
-	if (( $C_AUTH == 1 )); then
-		iperf_pid=$(sshpass -p "$CLIENT_PASSWORD" \
-			    ssh ${CLIENT_USER}@${CLIENT_IP} "ps" \
-			    | awk '/[i]perf/{ print $1 }')
-		if [ -n "$iperf_pid" ]; then
-			ret=$(sshpass -p "$CLIENT_PASSWORD" \
-			      ssh ${CLIENT_USER}@${CLIENT_IP} \
-			      "kill -9 $iperf_pid")
-			check_ret_val "$?" "Could not kill iperf: $iperf_pid - $ret"
-		fi
-
-		ret=$(nohup sshpass -p "$CLIENT_PASSWORD" \
-		      ssh ${CLIENT_USER}@${CLIENT_IP} \
-		      "iperf3 $param $SERVER_WIFI_IP" \
-		      >> ${LOG_PATH}/${log_name} &)
-		check_ret_val $? "Failed to start iperf client on ${CLIENT_IP}: $ret"
-	else
-		iperf_pid=$(ssh -i $CLIENT_CERTIFICATE \
-			    ${CLIENT_USER}@${CLIENT_IP} "ps" \
-			    | awk '/[i]perf/{ print $1 }')
-		if [ -n "$iperf_pid" ]; then
-			ret=$(ssh -i $CLIENT_CERTIFICATE \
-			      ${CLIENT_USER}@${CLIENT_IP} \
-			      "kill -9 $iperf_pid")
-			check_ret_val "$?" "Could not kill iperf: $iperf_pid - $ret"
-		fi
-
-		ret=$(nohup ssh -i $CLIENT_CERTIFICATE \
-		      ${CLIENT_USER}@${CLIENT_IP} \
-		      "iperf3 $param $SERVER_WIFI_IP" \
-		      >> ${LOG_PATH}/${log_name} &)
-		check_ret_val $? "Failed to start iperf client on ${CLIENT_IP}: $ret"
+		check_ret_val $? "Failed to start iperf with ${param}on ${ip}: $ret"
 	fi
 }
 
@@ -317,8 +290,8 @@ main()
 		fi
 
 		#start measurement
-		start_iperf_server "$i"
-		start_iperf_client "$i"
+		start_iperf "$i" "$CLIENT"
+		start_iperf "$i" "$SERVER"
 
 		start_antennuator ${ATTENUATOR_PARAMS[${i} - 1]}
 	done
