@@ -110,10 +110,24 @@ start_tcpdump()
 	fi
 }
 
+# print information about this script
+#
+call_help()
+{
+	printf "con-test help:\n\n"
+	printf "\t -c, --config:\t provide path to conn-test.conf, default ./conn-test.conf \n\n"
+	printf "\t -h, --help:\t call this overview\n\n"
+	printf "\t -i, --interface\t  monitor interface\n\n"
+	printf "\t -o, --output\t path to log file to store output, default ./conn-test.log \n\n"
+	printf "\t -t, --time\t time to run tcpdump\n"
+	printf "\t -V, --version\t print con-test version\n"
+}
+
 # main function
 #
 # Arguments:
 # args - command line arguments
+#
 main()
 {
 	args=$@
