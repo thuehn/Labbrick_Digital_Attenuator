@@ -65,63 +65,48 @@ check_monitor()
 	return $ret
 }
 
-# start tcp dump on the client side
+# start tcp dump
 #
 # Arguemnts:
 # interface - use this interface for tcpdump
-# file_name - name for log file
 # time - amount of seconds tcpdump runs
+# side - Client or server side to start tcpdump
 #
-start_client_tcpdump()
+start_tcpdump()
 {
 	interface=$1
-	file_name="client_$2"
-	time=$3
+	time=$2
+	side=$3
+	auth=$(check_auth $side)
 
-	if (( $C_AUTH == 1)); then
-		check_monitor $interface $CLIENT_PASSWORD $CLIENT_USER $CLIENT_IP
+	if (( $side == $CLIENT )); then
+		file_name="client_con-test-tcpdump-$(date +%F-%H-%M-%S).log"
+		passwd=$CLIENT_PASSWORD
+		cert=$CLIENT_CERTIFICATE
+		ip=$CLIENT_IP
+		user=$CLIENT_USER
+	else
+		file_name="server_con-test-tcpdump-$(date +%F-%H-%M-%S).log"
+		passwd=$SERVER_PASSWORD
+		cert=$SERVER_CERTIFICATE
+		ip=$SERVER_IP
+		user=$SERVER_USER
+	fi
+
+	if (( $auth == $PASSWD )); then
+		check_monitor $interface $passwd $user $ip
 		check_ret_val $? "Please set the interface to monitor mode"
 
-		ret=$(nohup sshpass -p "$CLIENT_PASSWORD" \
-			     ssh ${CLIENT_USER}@${CLIENT_IP} \
-			     "timeout $time tcpdump -w ${LOG_PATH}/$file_name -i $interface" \
-			     >> ${LOG_PATH}/${file_name} &)
-		check_ret_val $? "something went wrong starting tcpdump on $CLIENT_IP"
+		ret=$(nohup sshpass -p "$passwd" ssh ${user}@${ip} \
+			     "timeout $time tcpdump -w ${LOG_PATH}/$file_name \
+			     -i $interface" >> ${LOG_PATH}/${file_name} &)
+		check_ret_val $? "something went wrong starting tcpdump on $ip"
 	else
-		ret=$(nohup ssh -i ${CLIENT_CERTIFICATE} \
-		      ${CLIENT_USER}@${CLIENT_IP} \
-		      "timeout $time tcpdump -w ${LOG_PATH}/${file_name} -i $interface" \
-		      >> ${LOG_PATH}/${file_name} &)
-		check_ret_val $? "something went wrong starting tcpdump on $CLIENT_IP"
+		ret=$(nohup ssh -i ${cert} ${user}@${ip} \
+		      "timeout $time tcpdump -w ${LOG_PATH}/${file_name} \
+		      -i $interface" >> ${LOG_PATH}/${file_name} &)
+		check_ret_val $? "something went wrong starting tcpdump on $ip"
 
-	fi
-}
-
-# start tcp dump on the server side
-#
-# Arguemnts:
-# interface - use this interface for tcpdump
-# file_name - name for log file
-# time - amount of seconds tcpdump runs
-#
-start_server_tcpdump()
-{
-	interface=$1
-	file_name="server_$2"
-	time=$3
-
-	if (( $C_AUTH == 1)); then
-		ret=$(nohup sshpass -p "$SERVER_PASSWORD" \
-			     ssh ${SERVER_USER}@${SERVER_IP} \
-			     "timeout $time tcpdump -w ${LOG_PATH}/$file_name -i $interface" \
-			     >> ${LOG_PATH}/${file_name} &)
-		check_ret_val $? "something went wrong starting tcpdump on $CLIENT_IP"
-	else
-		ret=$(nohup ssh -i ${SERVER_CERTIFICATE} \
-		      ${SERVER_USER}@${SERVER_IP} \
-		      "timeout $time tcpdump -w ${LOG_PATH}/${file_name} -i $interface" \
-		      >> ${LOG_PATH}/${file_name} &)
-		check_ret_val $? "something went wrong starting tcpdump on $CLIENT_IP"
 	fi
 }
 
@@ -134,12 +119,11 @@ main()
 	args=$@
 	time=0
 	interface=''
-	file_name="con-test-tcpdump-$(date +%F-%H-%M-%S).log"
 
 	test_get_opt
 
-	options=c:f:hmo:t:V
-	loptions=config:,file:,help,monitor,output:,time:,version
+	options=c:hmo:t:V
+	loptions=config:,help,monitor,output:,time:,version
 	config_path="con-test.conf"
 
 	! parsed=$(getopt --options=$options --longoptions=$loptions --name "$0" -- $args)
@@ -153,10 +137,6 @@ main()
 		case "$1" in
 			-c | --config)
 				config_path=$2
-				shift 2
-				;;
-			-f | --file)
-				file_name=$2
 				shift 2
 				;;
 			-h | --help)
@@ -212,11 +192,11 @@ main()
 	check_monitor $interface
 
 	printf "${INFO} starting monitoring $interface on $CLIENT_IP\n"
-	ret=start_client_tcpdump $interface $file_name $time
+	ret=start_tcpdump $interface $time $CLIENT
 	check_ret_val $ret "Failed to start tcpdump on $CLIENT_IP $interface"
 
 	printf "${INFO} starting monitoring $interface on $SERVER_IP\n"
-	ret=start_server_tcpdump $interface $file_name $time
+	ret=start_tcpdump $interface $time $SERVER
 	check_ret_val $ret "Failed to start tcpdump on $SERVER_IP $interafce"
 }
 

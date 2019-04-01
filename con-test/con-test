@@ -65,11 +65,8 @@ start_iperf()
 			param="${IPERF_PARAM_CLIENT[${run} - 1]} $param"
 		fi
 
-		if (( $auth == 0 )); then
-			passwd=$CLIENT_PASSWORD
-		else
-			cert=$CLIENT_CERTIFICATE
-		fi
+		passwd=$CLIENT_PASSWORD
+		cert=$CLIENT_CERTIFICATE
 
 	else
 		log_name="con-test-server-run-${run}-$(date +%F-%H-%M-%S).log"
@@ -79,11 +76,8 @@ start_iperf()
 		if [ -n "${IPERF_PARAM_SERVER[${run} - 1]}" ]; then
 			param="${param} ${IPERF_PARAM_SERVER[${run} - 1]}"
 		fi
-		if (( $auth == 0 )); then
-			passwd=$SERVER_PASSWORD
-		else
-			cert=$SERVER_CERTIFICATE
-		fi
+		passwd=$SERVER_PASSWORD
+		cert=$SERVER_CERTIFICATE
 	fi
 
 	echo "Attenuation parameter: ${ATTENUATOR_PARAMS[${run} - 1]}" > \
