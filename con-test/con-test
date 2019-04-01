@@ -91,7 +91,7 @@ start_iperf()
 	echo "Iperf parameter: ${param}" >> ${LOG_PATH}/${log_name}
 
 	# use cert or password for authentication
-	if (( $auth == $CLIENT )); then
+	if (( $auth == $PASSWD )); then
 		iperf_pid=$(sshpass -p "$passwd" \
 			    ssh ${user}@${ip} "ps" \
 			    | awk '/[i]perf/{ print $1 }')

@@ -38,6 +38,9 @@ FAILURE=1
 CLIENT=0
 SERVER=1
 
+PASSWD=1
+CERT=0
+
 # Test if getopt works as expected
 #
 test_get_opt()
