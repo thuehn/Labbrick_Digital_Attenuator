@@ -28,10 +28,6 @@ source ./commons
 LOG_PATH="con-test_logs"
 SUDO=''
 
-# 0 -> certificate, 1 -> password; set in check_dependencies
-S_AUTH=1
-C_AUTH=1
-
 # set interface to monitor mode to collect traffic with tcpdump
 #
 # Aguments:
