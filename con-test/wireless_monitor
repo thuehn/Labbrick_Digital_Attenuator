@@ -46,13 +46,26 @@ set_interface_to_monitor()
 check_monitor()
 {
 	interface=$1
-	user=$2
+	passwd=$2
+	cert=$3
+	user=$4
+	ip=$5
+	auth=$6
 
-	if [[ "$user" == "c" ]]; then
-
-		if [[ "$(iw dev | awk "/${interface}/{nr[NR+5]}; NR in nr" | \
+	if (( $auth == $PASSWD )); then
+		if [[ "$(sshpass -p "$passwd" ssh ${user}@${ip} \
+			iw dev | awk "/${interface}/{nr[NR+5]}; NR in nr" | \
 			awk '{print $2}')" == "monitor" ]]; then
-			ret=$SUCCESS
+				ret=$SUCCESS
+		else
+			printf "${WARNING} $interface is not in monitor mode\n"
+			ret=$FAILURE
+		fi
+	else
+		if [[ "$(ssh -i ${cert} ${user}@${ip} \
+			iw dev | awk "/${interface}/{nr[NR+5]}; NR in nr" | \
+			awk '{print $2}')" == "monitor" ]]; then
+				ret=$SUCCESS
 		else
 			printf "${WARNING} $interface is not in monitor mode\n"
 			ret=$FAILURE
@@ -90,7 +103,7 @@ start_tcpdump()
 	fi
 
 	if (( $auth == $PASSWD )); then
-		check_monitor $interface $passwd $user $ip
+		check_monitor $interface $passwd $cert $user $ip $auth
 		check_ret_val $? "Please set the interface to monitor mode"
 
 		ret=$(nohup sshpass -p "$passwd" ssh ${user}@${ip} \
@@ -98,6 +111,7 @@ start_tcpdump()
 			     -i $interface" >> ${LOG_PATH}/${file_name} &)
 		check_ret_val $? "something went wrong starting tcpdump on $ip"
 	else
+		check_monitor $interface $passwd $cert $user $ip $auth
 		ret=$(nohup ssh -i ${cert} ${user}@${ip} \
 		      "timeout $time tcpdump -w ${LOG_PATH}/${file_name} \
 		      -i $interface" >> ${LOG_PATH}/${file_name} &)
@@ -199,7 +213,7 @@ main()
 
 	mkdir -p $LOG_PATH
 
-	check_monitor $interface
+	# check_monitor $interface
 
 	printf "${INFO} starting monitoring $interface on $CLIENT_IP\n"
 	ret=start_tcpdump $interface $time $CLIENT
