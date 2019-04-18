@@ -104,7 +104,7 @@ check_auth()
 			ret=0
 		fi
 	fi
-	return $ret
+	echo $ret
 }
 
 # print version of con-test
