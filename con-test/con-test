@@ -23,7 +23,6 @@
 #
 ################################################################################
 
-
 set -o pipefail -o noclobber
 
 # import common funcitons and variables
@@ -34,6 +33,146 @@ VERBOSE=n
 LOG_PATH="con-test_logs"
 
 SUDO=''
+
+PIPE=/tmp/con-test-pipe
+
+# create a file on remote system to stop file collection
+#
+# Arguments:
+# side - client or server side to stop
+#
+stop_file_collect()
+{
+	side=$1
+	auth=$(check_auth $side)
+
+	if [[ "$side" == "$CLIENT" ]]; then
+		ip=$CLIENT_IP
+		user=$CLIENT_USER
+		passwd=${CLIENT_PASSWORD:-"none"}
+		cert=${CLIENT_CERTIFICATE:-"none"}
+	else
+		ip=$SERVER_IP
+		user=$SERVER_USER
+		passwd=${SERVER_PASSWORD:-"none"}
+		cert=${SERVER_CERTIFICATE:-"none"}
+	fi
+
+	if [[ "$auth" == "$PASSWD" ]]; then
+		sshpass -p $passwd ssh ${user}@${ip} \
+			'touch /tmp/stop'
+	else
+		ssh -i $cert ${user}@${ip} \
+			'touch /tmp/stop'
+	fi
+}
+
+# get a single file from target
+#
+# Arguments:
+# ip  	-	ip address to optain file from
+# user -	username for login
+# passwd -	password for user
+# cert -	certificate for login
+# auth -	use password or cert for login
+# file -	file to get from system
+# run -		run number
+# log -		log path
+# side -	client or server side
+# time -	time inbetween file reads
+#
+get_file()
+{
+
+	file=$1 && shift
+	echo "$file"
+	collect_args=($@)
+	ip=${collect_args[0]}
+	user=${collect_args[1]}
+	passwd=${collect_args[2]}
+	cert=${collect_args[3]}
+	run=${collect_args[4]}
+	log=${collect_args[5]}
+	side=${collect_args[6]}
+	time=${collect_args[7]}
+	auth=${collect_args[8]}
+
+	source ./commons
+
+echo "${collect_args[@]}, ${collect_args[8]}"
+echo "AUTH: $auth, CLIENT: $CLIENT, SERVER: $SERVER, LOGPATH: $LOG_PATH"
+
+	if [[ "$side" == "$CLIENT" ]]; then
+		append='client'
+	else
+		append='server'
+	fi
+
+	if [[ "$auth" == "$PASSWD" ]]; then
+		sshpass -p "$passwd" ssh ${user}@${ip} 'if [[ -f /tmp/stop ]]; then rm /tmp/stop fi'
+		sshpass -p "$passwd" ssh ${user}@${ip} \
+			"while usleep $time; do
+				if [ -f '/tmp/stop' ]; then \
+					break;
+				fi;
+				cat $file;
+			done" | while IFS= read -r line; do printf '[%s] %s\n' \
+			"$(date '+%Y-%m-%d %H:%M:%S.%N')" "$line"; \
+			done >> ${log}/$(basename $file)_${run}_${append}.log
+	else
+		ssh -i $cert ${user}@${ip} 'if [[ -f /tmp/stop ]]; then rm /tmp/stop fi'
+		ssh -i $cert ${user}@${ip} \
+			"while usleep $time; do
+				if [ -f '/tmp/stop' ]; then \
+					break;
+				fi;
+				cat $file;
+			done" | while IFS= read -r line; do printf '[%s] %s\n' \
+			"$(date '+%Y-%m-%d %H:%M:%S.%N')" "$line"; \
+			done >> ${log}/$(basename $file)_${run}_${append}.log
+	fi
+}
+export -f get_file
+
+# get file from remote system
+#
+# Arguemtns:
+# file - file to collect from remote system
+# side - collect from client or server
+# time - time inbetween file reads
+#
+collect_files()
+{
+	run=$1
+	side=$2
+	time=$3
+	config_path=$4
+	auth=$(check_auth $side)
+
+	export $LOG_PATH
+	if (( $side == $CLIENT )); then
+		declare -a collect_arg=("$CLIENT_IP"
+					"$CLIENT_USER"
+					"${CLIENT_PASSWORD:-"none"}" 
+					"${CLIENT_CERTIFICATE:-"none"}")
+	else
+		declare -a collect_arg=("$SERVER_IP"
+					"$SERVER_USER"
+					"${SERVER_PASSWORD:-"none"}"
+					"${SERVER_CERTIFICATE:-"none"}")
+	fi
+	collect_arg=("${collect_arg[@]}"
+		     "$run"
+		     "$LOG_PATH"
+		     "$side"
+		     "$time"
+		     "$auth")
+
+	echo "FILES: ${FILES[@]}"
+	echo "${collect_arg[@]}"
+	printf '%s\0' ${FILES[@]} | xargs -0 -I{} -P 8 bash -c \
+		"get_file {} ${collect_arg[@]}"
+}
 
 # check dependencies on wifi nodes
 #
@@ -55,10 +194,10 @@ start_iperf()
 	run="$1"
 	side=$2
 
-	auth=$(chack_auth $side)
+	auth=$(check_auth $side)
 
 	# set parameter for client or server
-	if (( $side == $CLIENT )); then
+	if [[ "$side" == "$CLIENT" ]]; then
 		log_name="con-test-client-run-${run}-$(date +%F-%H-%M-%S).log"
 		ip=$CLIENT_IP
 		user=$CLIENT_USER
@@ -87,7 +226,7 @@ start_iperf()
 	echo "Iperf parameter: ${param}" >> ${LOG_PATH}/${log_name}
 
 	# use cert or password for authentication
-	if (( $auth == $PASSWD )); then
+	if [[ "$auth" == "$PASSWD" ]]; then
 		iperf_pid=$(sshpass -p "$passwd" \
 			    ssh ${user}@${ip} "ps" \
 			    | awk '/[i]perf/{ print $1 }')
@@ -213,6 +352,11 @@ main()
 	
 	config_path="con-test.conf"
 	LOG_PATH="con-test_logs"
+
+	if [[ ! -p $PIPE ]]; then
+		mkfifo $PIPE
+	fi
+	export $PIPE
 	
 	! parsed=$(getopt --options=$options --longoptions=$loptions --name "$0" -- $args)
 	if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
@@ -224,6 +368,7 @@ main()
 		case "$1" in
 			-c | --config)
 				config_path=$2
+				export config_path
 				shift 2
 				;;
 			-h | --help)
@@ -259,6 +404,7 @@ main()
 		printf "${ERROR} ${config_path} does not exist, or can not be accessed"
 		exit $FAILURE
 	fi
+	export $LOG_PATH
 	source ${config_path}
 
 	check_dependecies
@@ -268,6 +414,7 @@ main()
 	for i in $(seq 1 ${NR_RUNS}); do
 		printf "${INFO} Starting test run $i with parameters:"
 		printf " ${ATTENUATOR_PARAMS[${i} - 1]}\n"
+		time="${TIME[${i} - 1]:-100000}"
 
 		if [ -n "${UPDATE_PKG[${i} - 1]}" ]; then
 			printf "${INFO} update package: ${UPDATE_PKG[${i} - 1]}"
@@ -289,7 +436,12 @@ main()
 		start_iperf "$i" "$CLIENT"
 		start_iperf "$i" "$SERVER"
 
+		collect_files "$i" $CLIENT "$time" "$config_path" &
+		collect_files "$i" $SERVER "$time" "$config_path" &
+
 		start_antennuator ${ATTENUATOR_PARAMS[${i} - 1]}
+		stop_file_collect "$CLIENT"
+		stop_file_collect "$SERVER"
 	done
 }
 
