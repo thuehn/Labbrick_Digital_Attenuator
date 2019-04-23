@@ -43,6 +43,56 @@ set_interface_to_monitor()
 	$SUDO ifconfig $interface up
 }
 
+
+stop_tcpdump()
+{
+	side=$1
+	auth=$(check_auth $side)
+
+	if (( $side == $CLIENT )); then
+		ip=$CLIENT_IP
+		user=$CLIENT_USER
+		passwd=$CLIENT_PASSWORD
+		cert=$CLIENT_CERTIFICATE
+	else
+		ip=$SERVER_IP
+		user=$SERVER_USER
+		passwd=$SERVER_PASSWORD
+		cert=$SERVER_CERTIFICATE
+	fi
+
+	if [[ "$auth" == "$PASSWD" ]]; then
+		tcpdump_pid=$(sshpass -p $passwd \
+			ssh ${user}@${ip} \
+			'ps' | awk '/[t]cpdump/{ print $1 }')
+		if [ ! -z $tcpdump_pid ]; then
+			ret=$(sshpass -p $passwd \
+				ssh ${user}@${ip} \
+				"kill $tcpdump_pid")
+			check_ret_val $? "Could not kill tcpdump on $ip: $ret"
+		fi
+	else
+		if [ ! -z $tcpdump_pid ]; then
+			tcpdump_pid=$(ssh -i $cert ${user}@${ip} \
+				'ps' | awk '/[t]cpdump/{ print $1 }')
+			ret=$(ssh -i $cert ${user}@${ip} \
+				"kill $tcpdump_pid")
+			check_ret_val $? "Could not kill tcpdump on $ip: $ret"
+		fi
+	fi
+}
+
+stop_monitoring()
+{
+	while sleep 1; do
+		if [ -f '/tmp/stop_mon' ]; then
+			stop_tcpdump $CLIENT
+			stop_tcpdump $SERVER
+			exit $SUCCESS
+		fi
+	done
+}
+
 check_monitor()
 {
 	interface=$1
@@ -89,13 +139,13 @@ start_tcpdump()
 	auth=$(check_auth $side)
 
 	if (( $side == $CLIENT )); then
-		file_name="client_con-test-tcpdump-$(date +%F-%H-%M-%S).log"
+		file_name="client_con-test-tcpdump-$(date +%F-%H-%M-%S).pcap"
 		passwd=$CLIENT_PASSWORD
 		cert=$CLIENT_CERTIFICATE
 		ip=$CLIENT_IP
 		user=$CLIENT_USER
 	else
-		file_name="server_con-test-tcpdump-$(date +%F-%H-%M-%S).log"
+		file_name="server_con-test-tcpdump-$(date +%F-%H-%M-%S).pcap"
 		passwd=$SERVER_PASSWORD
 		cert=$SERVER_CERTIFICATE
 		ip=$SERVER_IP
@@ -103,21 +153,24 @@ start_tcpdump()
 	fi
 
 	if (( $auth == $PASSWD )); then
-		check_monitor $interface $passwd $cert $user $ip $auth
+#		check_monitor $interface $passwd $cert $user $ip $auth
 		check_ret_val $? "Please set the interface to monitor mode"
 
 		ret=$(nohup sshpass -p "$passwd" ssh ${user}@${ip} \
-			     "timeout $time tcpdump -w ${LOG_PATH}/$file_name \
-			     -i $interface" >> ${LOG_PATH}/${file_name} &)
+		      "tcpdump \
+		      -i $interface \
+		      -U -w -" > ${LOG_PATH}/${file_name} &)
 		check_ret_val $? "something went wrong starting tcpdump on $ip"
 	else
-		check_monitor $interface $passwd $cert $user $ip $auth
+#		check_monitor $interface $passwd $cert $user $ip $auth
 		ret=$(nohup ssh -i ${cert} ${user}@${ip} \
-		      "timeout $time tcpdump -w ${LOG_PATH}/${file_name} \
-		      -i $interface" >> ${LOG_PATH}/${file_name} &)
+		      "tcpdump \
+		      -i $interface \
+		      -U -w -" > ${LOG_PATH}/${file_name} &)
 		check_ret_val $? "something went wrong starting tcpdump on $ip"
 
 	fi
+	echo $ret
 }
 
 # print information about this script
@@ -127,7 +180,6 @@ call_help()
 	printf "con-test help:\n\n"
 	printf "\t -c, --config:\t provide path to conn-test.conf, default ./conn-test.conf \n\n"
 	printf "\t -h, --help:\t call this overview\n\n"
-	printf "\t -i, --interface\t  monitor interface\n\n"
 	printf "\t -o, --output\t path to log file to store output, default ./conn-test.log \n\n"
 	printf "\t -t, --time\t time to run tcpdump\n"
 	printf "\t -V, --version\t print con-test version\n"
@@ -146,8 +198,8 @@ main()
 
 	test_get_opt
 
-	options=c:hmo:t:V
-	loptions=config:,help,monitor,output:,time:,version
+	options=c:ho:t:V
+	loptions=config:,help,output:,time:,version
 	config_path="con-test.conf"
 
 	! parsed=$(getopt --options=$options --longoptions=$loptions --name "$0" -- $args)
@@ -166,10 +218,6 @@ main()
 			-h | --help)
 				call_help
 				exit $SUCCESS
-				;;
-			-i | --interface)
-				interface=$2
-				shift 2
 				;;
 			-o | --output)
 				LOG_PATH=$2
@@ -193,14 +241,10 @@ main()
 		esac
 	done
 
-	if [ -z $interface ]; then
-		printf "${ERROR} Please provide an interface for monitoring\n"
-		exit $FAILURE
-	fi
-
 	printf "${INFO} Starting wireless monitor\n"
 	printf "\t\tUsing config ${config_path}\n"
 	printf "\t\tUsing logpath ${LOG_PATH}\n"
+	export $LOG_PATH
 
 	if [ ! -f "${config_path}" ]; then
 		printf "${ERROR} ${config_path} does not exist or can not be accessed"
@@ -209,19 +253,28 @@ main()
 
 	source $config_path
 
+	stop_tcpdump $CLIENT
+	stop_tcpdump $SERVER
+	if [ -f '/tmp/stop_mon' ]; then
+		rm -f /tmp/stop_mon
+	fi
+
 	check_dependecies
 
 	mkdir -p $LOG_PATH
 
 	# check_monitor $interface
 
-	printf "${INFO} starting monitoring $interface on $CLIENT_IP\n"
-	ret=start_tcpdump $interface $time $CLIENT
-	check_ret_val $ret "Failed to start tcpdump on $CLIENT_IP $interface"
+	printf "${INFO} starting monitoring $CLIENT_INTERFACE on $CLIENT_IP\n"
+	start_tcpdump $CLIENT_INTERFACE $time $CLIENT
+	check_ret_val $? "Failed to start tcpdump on $CLIENT_IP $CLIENT_INTERFACE"
 
-	printf "${INFO} starting monitoring $interface on $SERVER_IP\n"
-	ret=start_tcpdump $interface $time $SERVER
-	check_ret_val $ret "Failed to start tcpdump on $SERVER_IP $interafce"
+	printf "${INFO} starting monitoring $SERVER_INTERFACE on $SERVER_IP\n"
+	start_tcpdump $SERVER_INTERFACE $time $SERVER
+	check_ret_val $? "Failed to start tcpdump on $SERVER_IP $SERVER_INTERFACE"
+
+	stop_monitoring
+	printf "${INFO} stopped monitoring on $CLIENT_IP and $SERVER_IP"
 }
 
 main $@

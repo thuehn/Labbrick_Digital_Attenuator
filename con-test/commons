@@ -42,6 +42,9 @@ SERVER=1
 PASSWD=1
 CERT=0
 
+ON=1
+OFF=0
+
 # Test if getopt works as expected
 #
 test_get_opt()
