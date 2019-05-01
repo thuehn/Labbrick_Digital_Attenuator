@@ -25,7 +25,7 @@
 
 # version numbers
 MAJOR=0
-MINOR=1
+MINOR=2
 RELEASE=0
 
 # output options

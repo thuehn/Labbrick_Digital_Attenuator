@@ -158,14 +158,14 @@ start_tcpdump()
 
 		ret=$(nohup sshpass -p "$passwd" ssh ${user}@${ip} \
 		      "tcpdump \
-		      -i $interface \
+		      -i $interface -s 256\
 		      -U -w -" > ${LOG_PATH}/${file_name} &)
 		check_ret_val $? "something went wrong starting tcpdump on $ip"
 	else
 #		check_monitor $interface $passwd $cert $user $ip $auth
 		ret=$(nohup ssh -i ${cert} ${user}@${ip} \
 		      "tcpdump \
-		      -i $interface \
+		      -i $interface -s 256\
 		      -U -w -" > ${LOG_PATH}/${file_name} &)
 		check_ret_val $? "something went wrong starting tcpdump on $ip"
 
