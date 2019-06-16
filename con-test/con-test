@@ -3,6 +3,8 @@
 ################################################################################
 #
 #    con-test
+#    This is part of the con-test framework
+#
 #    Copyright (C) 2018  Stefan Venz
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -21,84 +23,153 @@
 #
 ################################################################################
 
-
 set -o pipefail -o noclobber
 
-# version numbers
-MAJOR=0
-MINOR=1
-RELEASE=0
-
-# output options
-ERROR="$(tput bold; tput setaf 1)[Error]:$(tput sgr0)"
-WARNING="$(tput bold ; tput setaf 3)[Warning]:$(tput sgr0)"
-INFO="$(tput bold ; tput setaf 2) [INFO]:$(tput sgr0)"
-
-SUCCESS=0
-FAILURE=1
+# import common funcitons and variables
+source ./commons
 
 VERBOSE=n
 
-LOGPATH="con-test_logs"
+LOG_PATH="con-test_logs"
 
 SUDO=''
 
-# 0 -> certificate, 1 -> password
-S_AUTH=1
-C_AUTH=1
-
-# Test if getopt works as expected
+# create a file on remote system to stop file collection
 #
-test_get_opt()
+# Arguments:
+# side - client or server side to stop
+#
+stop_file_collect()
 {
-	! getopt --test > /dev/null 
-	if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
-	    return FAILURE
+	side=$1
+	auth=$(check_auth $side)
+
+	if [[ "$side" == "$CLIENT" ]]; then
+		ip=$CLIENT_IP
+		user=$CLIENT_USER
+		passwd=${CLIENT_PASSWORD:-"none"}
+		cert=${CLIENT_CERTIFICATE:-"none"}
+	else
+		ip=$SERVER_IP
+		user=$SERVER_USER
+		passwd=${SERVER_PASSWORD:-"none"}
+		cert=${SERVER_CERTIFICATE:-"none"}
+	fi
+
+	if [[ "$auth" == "$PASSWD" ]]; then
+		sshpass -p $passwd ssh ${user}@${ip} \
+			'touch /tmp/stop'
+	else
+		ssh -i $cert ${user}@${ip} \
+			'touch /tmp/stop'
 	fi
 }
 
-# check if all dependencies are installed
-#
-check_dependecies()
+add_timestamp()
 {
-	printf "${INFO} Checking dependencies on $HOSTNAME\n"
-	test_get_opt
-	check_ret_val "$?" "`getopt --test` failed in this environment."
-	if [ -z $SERVER_CERTIFICATE ] || [ -z $CLIENT_CERTIFICATE ]; then
-		hash sshpass 2>/dev/null
-		if (( $? != 0 )); then
-			printf "Please provide client/server certificate, or"
-			printf " install sshpass and provide passwords\n"
-			exit $FAILURE
-		fi
+	time=$1
+	file=$2
+	run=$3
+	append=$4
 
-		if [ -z $SERVER_PASSWORD ]; then
-			if [ ! -f $SERVER_CERTIFICATE ] ||
-			   [ -z $SERVER_CERTIFICATE ]; then
-				printf "No server password set, no certificate"
-				printf " provided/accessible.\n"
-				exit $FAILURE
-			fi
-			S_AUTH=0
+	while usleep $time
+	do
+		if [ -f '/tmp/stop' ]; then
+			break
 		fi
+		cat $file | while IFS= read -r line; do printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S.%N')" "$line"; done
+	done
+}
 
-		if [ -z $CLIENT_PASSWORD ]; then
-			if [ ! -f $CLIENT_CERTIFICATE ] ||
-			   [ -z $CLIENT_CERTIFICATE ];then
-				printf "No client password set, no certificate"
-				printf " provided/accessible.\n"
-				exit $FAILURE
-			fi
-			C_AUTH=0
-		fi
+# get a single file from target
+#
+# Arguments:
+# ip  	-	ip address to optain file from
+# user -	username for login
+# passwd -	password for user
+# cert -	certificate for login
+# auth -	use password or cert for login
+# file -	file to get from system
+# run -		run number
+# log -		log path
+# side -	client or server side
+# time -	time inbetween file reads
+#
+get_file()
+{
+	file=$1 && shift
+	collect_args=($@)
+	ip=${collect_args[0]}
+	user=${collect_args[1]}
+	passwd=${collect_args[2]}
+	cert=${collect_args[3]}
+	run=${collect_args[4]}
+	log=${collect_args[5]}
+	side=${collect_args[6]}
+	time=${collect_args[7]}
+	auth=${collect_args[8]}
+
+	if [[ "$side" == "$CLIENT" ]]; then
+		append='client'
+	else
+		append='server'
 	fi
 
-	if (( $EUID != 0 )); then
-		hash sudo 2>/dev/null
-		check_ret_val "$?" "Please run as root, or _install_ sudo."
-		SUDO='sudo'
+	if [[ "$auth" == "$PASSWD" ]]; then
+		sshpass -p "$passwd" ssh ${user}@${ip} 'if [[ -f /tmp/stop ]]; then rm /tmp/stop; fi'
+		sshpass -p "$passwd" ssh ${user}@${ip} \
+			"$(declare -f add_timestamp); \
+			add_timestamp $time $file $run $append" >> \
+			${log}/$(basename $file)_${run}_${append}.log
+
+	else
+		ssh -i $cert ${user}@${ip} 'if [[ -f /tmp/stop ]]; then rm /tmp/stop; fi'
+		ssh -i $cert ${user}@${ip} \
+			"$(declare -f add_timestamp); \
+			add_timestamp $time $file $run $append" >> \
+			${log}/$(basename $file)_${run}_${append}.log
 	fi
-	printf "${INFO} All checks passed on $HOSTNAME\n"
+}
+export -f get_file
+
+# get file from remote system
+#
+# Arguemtns:
+# file - file to collect from remote system
+# side - collect from client or server
+# time - time inbetween file reads
+#
+collect_files()
+{
+	run=$1
+	side=$2
+	time=$3
+	config_path=$4
+	auth=$(check_auth $side)
+
+	export $LOG_PATH
+	if (( $side == $CLIENT )); then
+		declare -a collect_arg=("$CLIENT_IP"
+					"$CLIENT_USER"
+					"${CLIENT_PASSWORD:-"none"}" 
+					"${CLIENT_CERTIFICATE:-"none"}")
+	else
+		declare -a collect_arg=("$SERVER_IP"
+					"$SERVER_USER"
+					"${SERVER_PASSWORD:-"none"}"
+					"${SERVER_CERTIFICATE:-"none"}")
+	fi
+	collect_arg=("${collect_arg[@]}"
+		     "$run"
+		     "$LOG_PATH"
+		     "$side"
+		     "$time"
+		     "$auth")
+
+	for file in ${FILES[@]};
+	do
+		get_file $file ${collect_arg[@]} &
+	done
 }
 
 # check dependencies on wifi nodes
@@ -114,102 +185,74 @@ check_remote_deps()
 #
 # Arguments:
 # run - number of current test, starting with 1
+# side - where to start iperf:  0 for client, 1 for server
 #
-start_iperf_server()
+start_iperf()
 {
 	run="$1"
-	log_name="con-test-server-run-${run}-$(date +%F-%H-%M-%S).log"
+	side=$2
 
-	param="-s"
-	if [ -n "${IPERF_PARAM_SERVER[${i} - 1]}" ]; then
-		param="${param} ${IPERF_PARAM_SERVER[${i} - 1]}"
-	fi
+	auth=$(check_auth $side)
 
-	echo "Attenuation parameter: ${ATTENUATOR_PARAMS[${i} - 1]}" > \
-							${LOG_PATH}/${log_name}
-	echo "Iperf parameter: ${param}" >> ${LOG_PATH}/${log_name}
-
-	if (( $S_AUTH == 1 )); then
-		iperf_pid=$(sshpass -p "$SERVER_PASSWORD" \
-			    ssh ${SERVER_USER}@${SERVER_IP} "ps" \
-			    | awk '/[i]perf/{ print $1 }')
-		if [ -n "$iperf_pid" ]; then
-			ret=$(sshpass -p "$SERVER_PASSWORD" \
-			      ssh ${SERVER_USER}@${SERVER_IP} \
-			      "kill -9 $iperf_pid")
-			check_ret_val "$?" "Could not kill iperf: $iperf_pid - $ret"
+	# set parameter for client or server
+	if [[ "$side" == "$CLIENT" ]]; then
+		log_name="con-test-client-run-${run}-$(date +%F-%H-%M-%S).log"
+		ip=$CLIENT_IP
+		user=$CLIENT_USER
+		param="-c $SERVER_WIFI_IP "
+		if [ -n "${IPERF_PARAM_CLIENT[${run} - 1]}" ]; then
+			param="${IPERF_PARAM_CLIENT[${run} - 1]} $param"
 		fi
 
-		ret=$(nohup sshpass -p "$SERVER_PASSWORD" \
-		      ssh ${SERVER_USER}@${SERVER_IP} \
-		      "iperf3 $param" >> ${LOG_PATH}/${log_name} &)
-		check_ret_val $? "Failed to start iperf server on ${SERVER_IP}: $ret"
+		passwd=$CLIENT_PASSWORD
+		cert=$CLIENT_CERTIFICATE
+
 	else
-		iperf_pid=$(ssh -i $SERVER_CERTIFICATE \
-			    ${SERVER_USER}@${SERVER_IP} "ps" \
-			    | awk '/[i]perf/{ print $1 }')
-		if [ -n "$iperf_pid" ]; then
-			ret=$(ssh -i $SERVER_CERTIFICATE \
-			      ${SERVER_USER}@${SERVER_IP} "kill -9 $iperf_pid")
-			check_ret_val "$?" "Could not kill iperf: $iperf_pid - $ret"
+		log_name="con-test-server-run-${run}-$(date +%F-%H-%M-%S).log"
+		ip=$SERVER_IP
+		user=$SERVER_USER
+		param="-s"
+		if [ -n "${IPERF_PARAM_SERVER[${run} - 1]}" ]; then
+			param="${param} ${IPERF_PARAM_SERVER[${run} - 1]}"
 		fi
-
-		ret=$(ssh -i $SERVER_CERTIFICATE \
-		      ${SERVER_USER}@${SERVER_IP} \
-		      "iperf3 $param" >> ${LOG_PATH}/${log_name} &)
-		check_ret_val $? "Failed to start iperf server on ${SERVER_IP}: $ret"
+		passwd=$SERVER_PASSWORD
+		cert=$SERVER_CERTIFICATE
 	fi
-}
 
-# start iperf client
-#
-# Arguments:
-# run - number of current test, starting with 1
-#
-start_iperf_client()
-{
-	run=$1
-	log_name="con-test-client-run-${run}-$(date +%F-%H-%M-%S).log"
-
-	echo "Attenuation parameter: ${ATTENUATOR_PARAMS[${i} - 1]}" > \
+	printf "${INFO} Attenuation parameter: ${ATTENUATOR_PARAMS[${run} - 1]}" > \
 							${LOG_PATH}/${log_name}
-	param="-c"
-	if [ -n "${IPERF_PARAM_CLIENT[${i} - 1]}" ]; then
-		param="${IPERF_PARAM_CLIENT[${i} - 1]} $param"
-	fi
+	printf "${INFO} Iperf parameter: ${param}" >> ${LOG_PATH}/${log_name}
 
-	if (( $C_AUTH == 1 )); then
-		iperf_pid=$(sshpass -p "$CLIENT_PASSWORD" \
-			    ssh ${CLIENT_USER}@${CLIENT_IP} "ps" \
+	# use cert or password for authentication
+	if [[ "$auth" == "$PASSWD" ]]; then
+		iperf_pid=$(sshpass -p "$passwd" \
+			    ssh ${user}@${ip} "ps" \
 			    | awk '/[i]perf/{ print $1 }')
 		if [ -n "$iperf_pid" ]; then
-			ret=$(sshpass -p "$CLIENT_PASSWORD" \
-			      ssh ${CLIENT_USER}@${CLIENT_IP} \
+			ret=$(sshpass -p "$passwd" \
+			      ssh ${user}@${ip} \
 			      "kill -9 $iperf_pid")
 			check_ret_val "$?" "Could not kill iperf: $iperf_pid - $ret"
 		fi
 
-		ret=$(nohup sshpass -p "$CLIENT_PASSWORD" \
-		      ssh ${CLIENT_USER}@${CLIENT_IP} \
-		      "iperf3 $param $SERVER_WIFI_IP" \
-		      >> ${LOG_PATH}/${log_name} &)
-		check_ret_val $? "Failed to start iperf client on ${CLIENT_IP}: $ret"
+		ret=$(nohup sshpass -p "$passwd" \
+		      ssh ${user}@${ip} \
+		      "iperf3 $param" >> ${LOG_PATH}/${log_name} &)
+		check_ret_val $? "Failed to start iperf with ${param} on ${ip}: $ret"
 	else
-		iperf_pid=$(ssh -i $CLIENT_CERTIFICATE \
-			    ${CLIENT_USER}@${CLIENT_IP} "ps" \
+		iperf_pid=$(ssh -i $cert \
+			    ${user}@${ip} "ps" \
 			    | awk '/[i]perf/{ print $1 }')
 		if [ -n "$iperf_pid" ]; then
-			ret=$(ssh -i $CLIENT_CERTIFICATE \
-			      ${CLIENT_USER}@${CLIENT_IP} \
-			      "kill -9 $iperf_pid")
+			ret=$(ssh -i $cert \
+			      ${user}@${ip} "kill -9 $iperf_pid")
 			check_ret_val "$?" "Could not kill iperf: $iperf_pid - $ret"
 		fi
 
-		ret=$(nohup ssh -i $CLIENT_CERTIFICATE \
-		      ${CLIENT_USER}@${CLIENT_IP} \
-		      "iperf3 $param $SERVER_WIFI_IP" \
-		      >> ${LOG_PATH}/${log_name} &)
-		check_ret_val $? "Failed to start iperf client on ${CLIENT_IP}: $ret"
+		ret=$(ssh -i $cert \
+		      ${user}@${ip} \
+		      "iperf3 $param" >> ${LOG_PATH}/${log_name} &)
+		check_ret_val $? "Failed to start iperf with ${param}on ${ip}: $ret"
 	fi
 }
 
@@ -294,30 +337,6 @@ call_help()
 	printf "\t -V, --version\t print con-test version\n"
 }
 
-# Check if value equals zero
-# exits with FAILURE on mismatch
-#
-# Arguments:
-# val - value to compare
-# string - output string on mismatch
-#
-check_ret_val()
-{
-	val="$1"
-	string="$2"
-	if [[ ! "$val" == "0" ]]; then
-		printf "$ERROR $string\n"
-		exit $FAILURE
-	fi
-}
-
-# print version of con-test
-#
-print_version()
-{
-	printf "${INFO} You are using Version %d.%d-%d\n" $MAJOR $MINOR $RELEASE
-}
-
 # main function
 #
 # Arguments:
@@ -326,11 +345,13 @@ print_version()
 main()
 {
 	args=$@
-	options=c:ho:vV
-	loptions=config:,help,output:,verbose,version
+	options=c:hmo:vV
+	loptions=config:,help,monitor,output:,verbose,version
+	mon=$OFF
 	
 	config_path="con-test.conf"
 	LOG_PATH="con-test_logs"
+
 	
 	! parsed=$(getopt --options=$options --longoptions=$loptions --name "$0" -- $args)
 	if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
@@ -342,11 +363,16 @@ main()
 		case "$1" in
 			-c | --config)
 				config_path=$2
+				export config_path
 				shift 2
 				;;
 			-h | --help)
 				call_help
 				exit $SUCCESS
+				;;
+			-m | --mon)
+				mon=$OFF
+				shift
 				;;
 			-o | --output)
 				LOG_PATH=$2
@@ -377,6 +403,7 @@ main()
 		printf "${ERROR} ${config_path} does not exist, or can not be accessed"
 		exit $FAILURE
 	fi
+	export $LOG_PATH
 	source ${config_path}
 
 	check_dependecies
@@ -386,6 +413,7 @@ main()
 	for i in $(seq 1 ${NR_RUNS}); do
 		printf "${INFO} Starting test run $i with parameters:"
 		printf " ${ATTENUATOR_PARAMS[${i} - 1]}\n"
+		time="${TIME[${i} - 1]:-100000}"
 
 		if [ -n "${UPDATE_PKG[${i} - 1]}" ]; then
 			printf "${INFO} update package: ${UPDATE_PKG[${i} - 1]}"
@@ -403,11 +431,29 @@ main()
 			unset $PARAMS
 		fi
 
+		if [[ "$mon" == "$ON" ]]; then
+			bash wireless_monitor -o $LOG_PATH -c $config_path &
+		fi
+
 		#start measurement
-		start_iperf_server "$i"
-		start_iperf_client "$i"
+		start_iperf "$i" "$SERVER"
+		start_iperf "$i" "$CLIENT"
+
+		collect_files "$i" $CLIENT "$time" "$config_path" &
+		collect_files "$i" $SERVER "$time" "$config_path" &
+
+		sleep 3
 
 		start_antennuator ${ATTENUATOR_PARAMS[${i} - 1]}
+
+		sleep 2
+
+		stop_file_collect "$CLIENT"
+		stop_file_collect "$SERVER"
+
+		if [[ "$mon" == "$ON" ]]; then
+			touch /tmp/stop_mon
+		fi
 	done
 }
 

@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+
+################################################################################
+#
+#    commons
+#    This is part of the con-test framework
+#
+#    Copyright (C) 2019  Stefan Venz
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License along
+#    with this program; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+################################################################################
+
+# version numbers
+MAJOR=0
+MINOR=2
+RELEASE=0
+
+# output options
+ERROR="$(tput bold; tput setaf 1)[Error]:$(tput sgr0)"
+WARNING="$(tput bold ; tput setaf 3)[Warning]:$(tput sgr0)"
+INFO="$(tput bold ; tput setaf 2) [INFO]:$(tput sgr0)"
+
+SUCCESS=0
+FAILURE=1
+
+CLIENT=0
+SERVER=1
+
+PASSWD=1
+CERT=0
+
+ON=1
+OFF=0
+
+# Test if getopt works as expected
+#
+test_get_opt()
+{
+	! getopt --test > /dev/null
+	if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
+	    return $FAILURE
+	fi
+}
+
+# Check if value equals zero
+# exits with FAILURE on mismatch
+#
+# Arguments:
+# val - value to compare
+# string - output string on mismatch
+#
+check_ret_val()
+{
+	val="$1"
+	string="$2"
+	if [[ ! "$val" == "0" ]]; then
+		printf "$ERROR $string\n"
+		exit $FAILURE
+	fi
+}
+
+# Check which authentication and side to use
+#
+# Arguments:
+# side - 0 for client, 1 for server
+#
+# returns:
+# 0 if certificate
+# 1 on password
+#
+check_auth()
+{
+	side=$1
+	if (( $side == $CLIENT )); then
+		ret=1
+		if [ -z $CLIENT_PASSWORD ]; then
+			if [ ! -f $CLIENT_CERTIFICATE ] ||
+			   [ -z $CLIENT_CERTIFICATE ];then
+				printf "No client password set, no certificate"
+				printf " provided/accessible.\n"
+				exit $FAILURE
+			fi
+			ret=0
+		fi
+	else
+		ret=1
+		if [ -z $SERVER_PASSWORD ]; then
+			if [ ! -f $SERVER_CERTIFICATE ] ||
+			   [ -z $SERVER_CERTIFICATE ]; then
+				printf "No server password set, no certificate"
+				printf " provided/accessible.\n"
+				exit $FAILURE
+			fi
+			ret=0
+		fi
+	fi
+	echo $ret
+}
+
+# print version of con-test
+#
+print_version()
+{
+	printf "${INFO} You are using Version %d.%d-%d\n" $MAJOR $MINOR $RELEASE
+}
+
+# check if all dependencies are installed
+#
+check_dependecies()
+{
+	printf "${INFO} Checking dependencies on $HOSTNAME\n"
+	test_get_opt
+	check_ret_val "$?" "`getopt --test` failed in this environment."
+	if [ -z $SERVER_CERTIFICATE ] || [ -z $CLIENT_CERTIFICATE ]; then
+		hash sshpass 2>/dev/null
+		if (( $? != 0 )); then
+			printf "Please provide client/server certificate, or"
+			printf " install sshpass and provide passwords\n"
+			exit $FAILURE
+		fi
+	fi
+
+	if (( $EUID != 0 )); then
+		hash sudo 2>/dev/null
+		check_ret_val "$?" "Please run as root, or _install_ sudo."
+		SUDO='sudo'
+	fi
+	printf "${INFO} All checks passed on $HOSTNAME\n"
+}
+
