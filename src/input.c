@@ -45,8 +45,9 @@ set_time_unit(char *time_unit, struct user_data *ud)
 	ud->ms = 0;
 	ud->us = 0;
 
-	if (strncmp(time_unit, "ms", strlen(time_unit)) == 0)
+	if (strncmp(time_unit, "ms\n", strlen(time_unit)) == 0) {
 		ud->ms = 1;
+	}
 	else if (strncmp(time_unit, "us", strlen(time_unit)) == 0)
 		ud->us = 1;
 }
