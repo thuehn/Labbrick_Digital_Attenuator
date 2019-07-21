@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <libgen.h>
 #include "control.h"
 #include "input.h"
 #include "LDAhid.h"
@@ -961,7 +962,7 @@ handle_multi_dev(int argc, char *argv[], int file_serial_check)
 				length = strlen(args.path) - 4;
 			}
 			strncpy(file_serial, args.path, length);
-			file_serial_int = atoi(file_serial);
+			file_serial_int = atoi(basename(file_serial));
 			tmp_id = get_id_by_serial(file_serial_int, device_count);
 			free(file_serial);
 			if (tmp_id < 0) {
