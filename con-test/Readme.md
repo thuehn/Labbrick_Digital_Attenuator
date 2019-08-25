@@ -75,3 +75,18 @@ You need to provide either identity file or password
  'options test 2' ... )
 
  `UPDATE_PACKAGE`- path to package for updates. =('path test 1' 'path test 2' ... )
+
+
+### Evaluation Scripts
+#### Command line options
+`-c/--config - set path for config file `
+
+`-h/--help - show usage options`
+
+`-i/--input - set path to input file to evaluate`
+
+`-o/--output - set path for output files `
+
+`-v/--verbose - print additional information `
+
+`-V/--version - show con-test version `
