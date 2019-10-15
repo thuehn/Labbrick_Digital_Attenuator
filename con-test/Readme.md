@@ -68,6 +68,9 @@ You need to provide either identity file or password
 `ATTENUATOR_PARAMS`- options for attenuation program provide in form
 =('options test 1' 'options test 2' ... )
 
+`ATTENUATOR_PATH`- path to attenuation programm in form
+=/path/to/programm
+
 `IPERF_PARAM_SERVER`- configuration options for iperf server. =('options test 1'
  'options test 2' ... )
 
