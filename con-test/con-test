@@ -264,7 +264,7 @@ start_iperf()
 start_antennuator()
 {
 	params="$@"
-	$SUDO /usr/local/bin/attenuator_lab_brick $params
+	$SUDO $ATTENUATOR_PATH $params
 	check_ret_val $? "Could not start the attenuation programm"
 }
 

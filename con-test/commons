@@ -122,8 +122,12 @@ print_version()
 check_dependecies()
 {
 	printf "${INFO} Checking dependencies on $HOSTNAME\n"
+
+	# check if getopt is installed
 	test_get_opt
 	check_ret_val "$?" "`getopt --test` failed in this environment."
+
+	# check provided credentials
 	if [ -z $SERVER_CERTIFICATE ] || [ -z $CLIENT_CERTIFICATE ]; then
 		hash sshpass 2>/dev/null
 		if (( $? != 0 )); then
@@ -133,11 +137,17 @@ check_dependecies()
 		fi
 	fi
 
+	# Test for root or sudo
 	if (( $EUID != 0 )); then
 		hash sudo 2>/dev/null
 		check_ret_val "$?" "Please run as root, or _install_ sudo."
 		SUDO='sudo'
 	fi
+
+	# check the path to attenuation programm
+	hash $ATTTENUATOR_PATH 2>/dev/null
+	check_ret_val "$?" "Could not find $ATTENUATOR_PATH"
+
 	printf "${INFO} All checks passed on $HOSTNAME\n"
 }
 
